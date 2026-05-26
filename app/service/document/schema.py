@@ -1,0 +1,8 @@
+from enum import Enum
+
+    
+class ProcessingType(str, Enum):
+    DOCUMENT_SUMMARY = "DOCUMENT_SUMMARY"
+    INVOICE_EXTRACTION = "INVOICE_EXTRACTION"
+    CONTRACT_METADATA = "CONTRACT_METADATA"
+    

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from app.api.v1.document.document import router as document_router
 from app.api.v1.file.file import router as file_router
 from app.api.v1.auth.auth import router as auth_router
+from app.api.v1.processing_request.processing_request import router as processing_request_router
 from app.db.engine import engine
 from app.core.minio import minio_client
 
@@ -42,6 +43,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(router=auth_router)
 app.include_router(router=document_router)
 app.include_router(router=file_router)
+app.include_router(router=processing_request_router)
 
 
 

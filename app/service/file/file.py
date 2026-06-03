@@ -1,0 +1,47 @@
+import os
+import uuid
+from fastapi import UploadFile
+from app.core.minio import client
+
+BUCKET_NAME = os.getenv("MINIO_BUCKET", "docflow-bucket")
+
+
+async def post_file(file: UploadFile):
+    file_id = str(uuid.uuid4())
+
+    file.file.seek(0, 2)
+    size = file.file.tell()
+    file.file.seek(0)
+
+    client.put_object(
+        bucket_name=BUCKET_NAME,
+        object_name=file_id,
+        data=file.file,
+        length=size,
+        content_type=file.content_type or "",
+    )
+
+    return {
+        "file_id": file_id
+    }
+
+def get_file(file_id: int):
+    return client.get_object(BUCKET_NAME, str(file_id))
+
+def delete_file(file_id: int):
+    client.remove_object(BUCKET_NAME, str(file_id))
+
+async def update_file(file: UploadFile, file_id: int):
+    file.file.seek(0, 2)
+    size = file.file.tell()
+    file.file.seek(0)
+
+    client.put_object(
+        bucket_name=BUCKET_NAME,
+        object_name=str(file_id),
+        data=file.file,
+        length=size,
+        content_type=file.content_type or "",
+    )
+
+    return {"updated": file_id}

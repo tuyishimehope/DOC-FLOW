@@ -1,17 +1,35 @@
+import os
 from fastapi import FastAPI
 from app.api.v1.document.document import router
 from app.db.engine import engine
-from app.db.base_class import Base
+from app.core.minio import client
+
 
 app = FastAPI()
 
 app.include_router(router=router)
 
+
+@app.on_event("startup")
+def startup():
+    print("Checking DB connection...")
+    with engine.connect() as conn:
+        print("Database Connected!")
+
+    bucket_name = os.getenv("MINIO_BUCKET", "")
+
+    if not client.bucket_exists(bucket_name):
+        client.make_bucket(bucket_name)
+        print(f"Bucket created: {bucket_name}")
+    else:
+        print("Bucket exists!")
+
+    print("Existing buckets:")
+    for bucket in client.list_buckets():
+        print(bucket.name, bucket.creation_date)
+
 @app.get("/")
 def ready():
-    with engine.connect() as conn:
-        print("Connected!")
-        
     return "APP IS RUNNING"
 
 @app.get("/health")

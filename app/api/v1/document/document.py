@@ -1,13 +1,13 @@
 from fastapi import APIRouter, UploadFile, HTTPException, status, Body
 
 from app.service.document.document import process_document
-from app.service.document.schema import ProcessingType
+from app.service.document.schema import Processing_Type
 from utils.document import valid_type_document
 
 router = APIRouter(prefix="/document",tags=["document"])
 
 @router.post("")
-async def post_document(file: UploadFile, processing_type: ProcessingType = Body(), instructions: str= Body()):
+async def post_document(file: UploadFile, processing_type: Processing_Type = Body(), instructions: str= Body()):
     result = valid_type_document(file=file)
     if not result:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File Format Not Accepted")

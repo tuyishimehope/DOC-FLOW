@@ -2,7 +2,7 @@ import io
 
 from fastapi import UploadFile
 
-from .schema import ProcessingType
+from .schema import Processing_Type
 from app.tasks.tasks import add
 from app.service.openai.service import OpenaiService
 
@@ -27,7 +27,7 @@ async def extract_text_from_doc(file_path: UploadFile):
     
     return full_text
 
-async def process_document(file: UploadFile, processing_type: ProcessingType, instructions: str):
+async def process_document(file: UploadFile, processing_type: Processing_Type, instructions: str):
     
     extracted_content = ""
     if file.content_type == "application/pdf":
@@ -38,11 +38,11 @@ async def process_document(file: UploadFile, processing_type: ProcessingType, in
     if not extracted_content:
         return
 
-    if processing_type == ProcessingType.DOCUMENT_SUMMARY:
+    if processing_type == Processing_Type.DOCUMENT_SUMMARY:
         result = await OpenaiService().generate_summary(content=extracted_content, instructions=instructions)
-    elif processing_type == ProcessingType.INVOICE_EXTRACTION:
+    elif processing_type == Processing_Type.INVOICE_EXTRACTION:
         result = await OpenaiService().get_invoice_metadata(content=extracted_content, instructions=instructions)
-    elif processing_type == ProcessingType.CONTRACT_METADATA:
+    elif processing_type == Processing_Type.CONTRACT_METADATA:
         result = await OpenaiService().get_contract_metadata(content=extracted_content, instructions=instructions)
     else:
         return

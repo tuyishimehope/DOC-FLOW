@@ -7,7 +7,7 @@ from app.db.dependencies import get_db_session
 from app.service.auth.auth import CurrentUser
 from app.service.file.file import get_file_by_id, delete_file_by_id
 
-router = APIRouter(prefix="/api/v1/file", tags=["file"])
+router = APIRouter(prefix="/api/v1/files", tags=["files"])
 
 
 @router.get("/{id}", status_code=status.HTTP_200_OK, summary="Get a file by id", description="You can get a file by id", responses={

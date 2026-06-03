@@ -41,11 +41,13 @@ async def process_document(file: UploadFile, processing_type: ProcessingType, in
     if processing_type == ProcessingType.DOCUMENT_SUMMARY:
         result = await OpenaiService().generate_summary(content=extracted_content, instructions=instructions)
     elif processing_type == ProcessingType.INVOICE_EXTRACTION:
-        result = await OpenaiService().generate_summary(content=extracted_content, instructions=instructions)
+        result = await OpenaiService().get_invoice_metadata(content=extracted_content, instructions=instructions)
     elif processing_type == ProcessingType.CONTRACT_METADATA:
-        result = await OpenaiService().generate_summary(content=extracted_content, instructions=instructions)
+        result = await OpenaiService().get_contract_metadata(content=extracted_content, instructions=instructions)
     else:
         return
+    
+    
         
     
     return result

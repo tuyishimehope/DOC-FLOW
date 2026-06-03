@@ -27,7 +27,7 @@ class OpenaiService:
 
         return response.output_text
 
-    async def get_metadata(self, content: str, instructions: str):
+    async def get_contract_metadata(self, content: str, instructions: str):
         response = self.client.responses.create(
             model="gpt-5.5",
             instructions=f"{instructions}",

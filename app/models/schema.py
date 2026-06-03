@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlalchemy import String, Text, JSON, Float, Integer, ForeignKey, Index, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
+from app.db.base_class import Base
 from app.service.document.schema import Document_Status, Processing_Type, Processing_status, Processing_Job_Status
 
 class Document(Base):

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.api.v1.document.document import router
 from app.db.engine import engine
+from app.db.base_class import Base
 
 app = FastAPI()
 

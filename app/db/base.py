@@ -1,5 +1,3 @@
-from sqlalchemy.orm import DeclarativeBase
+from app.db.base_class import Base
 
-class Base(DeclarativeBase):
-    pass
-
+from app.models.schema import Document, Processing_Request, Extracted_Result, Processing_Job

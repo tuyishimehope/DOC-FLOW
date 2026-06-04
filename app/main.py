@@ -5,12 +5,6 @@ from app.db.engine import engine
 from app.core.minio import client
 
 
-app = FastAPI()
-
-app.include_router(router=router)
-
-
-@app.on_event("startup")
 def startup():
     print("Checking DB connection...")
     with engine.connect() as conn:
@@ -27,6 +21,12 @@ def startup():
     print("Existing buckets:")
     for bucket in client.list_buckets():
         print(bucket.name, bucket.creation_date)
+
+app = FastAPI(lifespan=startup())
+
+app.include_router(router=router)
+
+
 
 @app.get("/")
 def ready():

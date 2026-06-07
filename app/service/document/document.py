@@ -12,7 +12,7 @@ from app.service.openai.service import OpenaiService
 from app.models.schema import Document, File, Processing_Request, Extracted_Result, Processing_Job
 from app.service.document.schema import Processing_status, Processing_Type, Processing_Job_Status
 from app.tasks.tasks import app
-from app.core.minio import client
+from app.core.minio import minio_client
 
 
 def extract_text_from_pdf(file_stream):
@@ -55,7 +55,7 @@ async def process_document(file: UploadFile, processing_type: Processing_Type, i
     db_session.commit()
     db_session.flush()
 
-    client.fput_object(bucket_name=os.getenv("MINIO_BUCKET", ""),
+    minio_client.fput_object(bucket_name=os.getenv("MINIO_BUCKET", ""),
                        object_name=str(file_object.id), file_path="/tmp/files")
 
     document_object = Document(name=file.filename, file=file_object)
@@ -96,7 +96,7 @@ def start_processing(processing_request_id: int):
             File.id == document_statement_result.id)
         file_statement_result = file_statement.scalar()
 
-        file_object = client.fget_object(bucket_name=os.getenv(
+        file_object = minio_client.fget_object(bucket_name=os.getenv(
             "MINIO_BUCKET", ""), object_name=str(file_statement_result.id), file_path="/tmpt/files")
 
         processing_type = processing_request_result.processing_type

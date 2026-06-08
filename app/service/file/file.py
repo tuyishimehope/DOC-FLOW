@@ -1,7 +1,7 @@
 import os
 import uuid
 from fastapi import UploadFile
-from app.core.minio import client
+from app.core.minio import minio_client
 
 BUCKET_NAME = os.getenv("MINIO_BUCKET", "docflow-bucket")
 
@@ -13,7 +13,7 @@ async def post_file(file: UploadFile):
     size = file.file.tell()
     file.file.seek(0)
 
-    client.put_object(
+    minio_client.put_object(
         bucket_name=BUCKET_NAME,
         object_name=file_id,
         data=file.file,
@@ -26,17 +26,17 @@ async def post_file(file: UploadFile):
     }
 
 def get_file(file_id: int):
-    return client.get_object(BUCKET_NAME, str(file_id))
+    return minio_client.get_object(BUCKET_NAME, str(file_id))
 
 def delete_file(file_id: int):
-    client.remove_object(BUCKET_NAME, str(file_id))
+    minio_client.remove_object(BUCKET_NAME, str(file_id))
 
 async def update_file(file: UploadFile, file_id: int):
     file.file.seek(0, 2)
     size = file.file.tell()
     file.file.seek(0)
 
-    client.put_object(
+    minio_client.put_object(
         bucket_name=BUCKET_NAME,
         object_name=str(file_id),
         data=file.file,

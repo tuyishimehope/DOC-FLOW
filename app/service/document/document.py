@@ -13,6 +13,7 @@ from app.models.schema import Document, File, Processing_Request, Extracted_Resu
 from app.service.document.schema import Processing_status, Processing_Type, Processing_Job_Status
 from app.tasks.tasks import app
 from app.core.minio import minio_client
+from app.service.file.file import post_file
 
 
 def extract_text_from_pdf(file_stream):
@@ -53,11 +54,12 @@ async def process_document(file: UploadFile, processing_type: Processing_Type, i
                        content_type=file.content_type, extension=file_name)
     db_session.add(file_object)
     db_session.commit()
-    db_session.flush()
+    db_session.refresh(file_object)
 
-    minio_client.fput_object(bucket_name=os.getenv("MINIO_BUCKET", ""),
-                       object_name=str(file_object.id), file_path="/tmp/files")
-
+    # result = minio_client.fput_object(bucket_name=os.getenv("MINIO_BUCKET", ""),
+                                    #   object_name=str(file_object.id), file_path=str(file_object.id))
+    result = await post_file(file)
+    print("result", result)
     document_object = Document(name=file.filename, file=file_object)
 
     db_session.add(document_object)
@@ -71,12 +73,17 @@ async def process_document(file: UploadFile, processing_type: Processing_Type, i
 
     db_session.commit()
 
-    start_processing.delay(processing_request_id=processing_request_object.id)
+    # start_processing.delay(processing_request_id=processing_request_object.id)
 
     return {"processing_request_id": processing_request_object.id, "status": processing_request_object.status}
 
 
-@app.task
+@app.task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3}
+)
 def start_processing(processing_request_id: int):
 
     db_session = SessionLocal()
@@ -93,7 +100,7 @@ def start_processing(processing_request_id: int):
         document_statement_result = document_statement.scalar()
 
         file_statement = db_session.query(File).where(
-            File.id == document_statement_result.id)
+            File.id == document_statement_result.file_id)
         file_statement_result = file_statement.scalar()
 
         file_object = minio_client.fget_object(bucket_name=os.getenv(
@@ -124,16 +131,17 @@ def start_processing(processing_request_id: int):
             return
 
         if result:
-            processing_object = Processing_Request(
-                status=Processing_status.COMPLETED, extracted_results=result)
+            processing_request_result.status = Processing_status.COMPLETED
+            db_session.add(processing_request_result)
+            db_session.commit()
 
-            extracted_result_object = Extracted_Result(processing_request_id=processing_object.id,
-                                                       result_type="", content_json="", confidence_score="")
+            extracted_result_object = Extracted_Result(processing_request_id=processing_request_result.id,
+                                                       result_type=processing_type.value, content_json={'result': result}, confidence_score=1.0)
 
-            processing_job_object = Processing_Job(processing_request_id=processing_object.id,
+            processing_job_object = Processing_Job(processing_request_id=processing_request_result.id,
                                                    attempt_number=1, started_at=datetime.now())
 
-            db_session.add([processing_object, extracted_result_object, processing_job_object
+            db_session.add([extracted_result_object, processing_job_object
                             ])
             db_session.commit()
 

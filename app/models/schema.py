@@ -15,7 +15,7 @@ class Document(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[Document_Status] = mapped_column(
         default=Document_Status.ACTIVE, index=True)
-    
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False)
     deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)

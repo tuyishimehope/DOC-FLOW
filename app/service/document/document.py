@@ -56,8 +56,6 @@ async def process_document(file: UploadFile, processing_type: Processing_Type, i
     db_session.commit()
     db_session.refresh(file_object)
 
-    # result = minio_client.fput_object(bucket_name=os.getenv("MINIO_BUCKET", ""),
-                                    #   object_name=str(file_object.id), file_path=str(file_object.id))
     result = await post_file(file)
     print("result", result)
     document_object = Document(name=file.filename, file=file_object)

@@ -20,7 +20,7 @@ services:
   worker:
     build: .
     container_name: docflow-worker
-    command: celery -A app.tasks.tasks worker --loglevel=info
+    command: celery -A app.tasks.celery_app worker --loglevel=DEBUG -E
     env_file:
       - .env
     depends_on:

@@ -6,8 +6,7 @@ from app.core.minio import minio_client
 BUCKET_NAME = os.getenv("MINIO_BUCKET", "docflow-bucket")
 
 
-async def post_file(file: UploadFile):
-    file_id = str(uuid.uuid4())
+async def post_file(file: UploadFile, file_id: str):
 
     file.file.seek(0, 2)
     size = file.file.tell()

@@ -5,7 +5,7 @@ services:
   api:
     build: .
     container_name: docflow-api
-    command: ./entrypoint.sh
+    command: sh ./entrypoint.sh
     ports:
       - "8000:8000"
     env_file:

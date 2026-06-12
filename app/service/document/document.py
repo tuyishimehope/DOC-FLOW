@@ -114,3 +114,28 @@ async def delete_document(id: int, db_session: Session):
             db_session.commit()
     except:
         db_session.rollback()
+        
+async def get_file_by_id(id: int, db_session: Session):
+    stmt = Select(File).where(File.id == id)
+
+    file_record = (
+        db_session.execute(stmt)
+        .scalar_one_or_none()
+    )
+
+    if not file_record:
+        return None
+    print(file_record.name)
+    response = get_file(file_id=id)
+
+    try:
+        content = response.read()
+    finally:
+        response.close()
+        response.release_conn()
+
+    return {
+        "name": file_record.name,
+        "content": content,
+        "content_type": file_record.content_type
+    }

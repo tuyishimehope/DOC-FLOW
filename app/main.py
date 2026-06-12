@@ -13,7 +13,7 @@ from app.core.minio import minio_client
 async def lifespan(app: FastAPI):
     print("Checking DB connection...")
 
-    with engine.connect() as conn:
+    async with engine.connect() as conn:
         print("Database Connected!")
 
     bucket_name = os.getenv("MINIO_BUCKET", "")

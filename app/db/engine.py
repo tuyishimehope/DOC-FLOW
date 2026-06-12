@@ -1,6 +1,9 @@
 import os
-from sqlalchemy import create_engine
 from dotenv import load_dotenv
+
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+)
 
 load_dotenv()
 
@@ -10,9 +13,6 @@ DATABASE_HOST=os.getenv("DATABASE_HOST")
 DATABASE_PORT=os.getenv("DATABASE_PORT")
 
 
-engine = create_engine(
-    f"postgresql+psycopg2://postgres:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
+engine = create_async_engine(
+    f"postgresql+asyncpg://postgres:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
 )
-
-with engine.connect() as conn:
-    print("Connected!")

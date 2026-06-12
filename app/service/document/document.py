@@ -1,70 +1,46 @@
 from fastapi import UploadFile
-from pathlib import Path
-from sqlalchemy import Select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from app.tasks.document_task import start_processing
-
+from app.utils.document import get_file_extension
 from .schema import Processing_Type
 from app.models.schema import Document, File, Processing_Request, Extracted_Result, Processing_Job
 from app.service.document.schema import Processing_status, Processing_Type, Processing_Job_Status
 from app.service.file.file import post_file, get_file
+from app.service.document.crud import delete_document_by_id, get_all_documents, get_document_by_id, get_file_id, get_processing_request_result, get_processing_request_status, save_document, save_file, save_processing_request
 
 
-def get_file_extension(file: UploadFile) -> str:
-    if file.filename is None:
-        raise ValueError("Uploaded file has no filename")
 
-    return Path(file.filename).suffix.lstrip(".")
-
-
-async def process_document(file: UploadFile, processing_type: Processing_Type, instructions: str, db_session: Session):
+async def process_document(file: UploadFile, processing_type: Processing_Type, instructions: str, db_session: AsyncSession):
     try:
         file_name = get_file_extension(file)
 
-        file_object = File(name=file.filename,
-                           content_type=file.content_type, extension=file_name)
+        file_object = await save_file(file=file, file_name=file_name, db_session=db_session)
 
-        db_session.add(file_object)
-        db_session.flush()
+        await post_file(file=file, file_id=str(file_object.id))
 
-        result = await post_file(file=file, file_id=str(file_object.id))
+        document_object = await save_document(file=file, file_object=file_object, db_session=db_session)
 
-        document_object = Document(name=file.filename, file=file_object)
-
-        db_session.add(document_object)
-        db_session.flush()
-
-        processing_request_object = Processing_Request(
-            document_id=document_object.id, processing_type=processing_type, instructions=instructions, status=Processing_status.PENDING)
-
-        db_session.add(processing_request_object)
-        db_session.commit()
+        processing_request_object = await save_processing_request(document_object=document_object, processing_type=processing_type, instructions=instructions, db_session=db_session)
 
         start_processing.delay(
             processing_request_id=processing_request_object.id)
 
         processing_request_object.status = Processing_status.QUEUED
-        db_session.commit()
+        await db_session.commit()
 
         return {"processing_request_id": processing_request_object.id, "status": processing_request_object.status}
     except Exception as e:
         print("An expected error occurred", e)
-        db_session.rollback()
+        await db_session.rollback()
 
 
-def get_processing_status(
+async def get_processing_status(
     processing_request_id: int,
-    db: Session
+    db_session: AsyncSession
 ):
-    request = (
-        Select(Processing_Request)
-        .where(
-            Processing_Request.id == processing_request_id
-        )
-    )
-    result = db.execute(request).scalar_one_or_none()
+    result = await get_processing_request_status(processing_request_id=processing_request_id, db_session=db_session)
 
     if not result:
         return None
@@ -75,57 +51,39 @@ def get_processing_status(
     }
 
 
-def get_processing_result(
+async def get_processing_result(
     processing_request_id: int,
-    db: Session
+    db_session: AsyncSession
 ):
-    request = (
-        Select(Extracted_Result)
-        .where(
-            Extracted_Result.processing_request_id
-            == processing_request_id
-        )
-    )
-    result = db.execute(request).scalar_one_or_none()
-    
+    result = await get_processing_request_result(processing_request_id=processing_request_id, db_session=db_session)
+
     if not result:
         return None
 
     return result.content_json
 
 
-async def get_document(id: int, db_session: Session):
-    statement = Select(Document).where(Document.id == id)
-    result = db_session.execute(statement).scalar_one_or_none()
+async def get_document(id: int, db_session: AsyncSession):
+    result = await get_document_by_id(id=id, db_session=db_session)
     return result
 
 
-async def get_documents(db_session: Session):
-    statement = Select(Document)
-    result = db_session.execute(statement).scalars().all()
+async def get_documents(db_session: AsyncSession):
+    result = await get_all_documents(db_session=db_session)
     return result
 
 
-async def delete_document(id: int, db_session: Session):
-    try:
-        document = get_document(id = id, db_session=db_session)
-        if document :
-            db_session.delete(document)
-            db_session.commit()
-    except:
-        db_session.rollback()
-        
-async def get_file_by_id(id: int, db_session: Session):
-    stmt = Select(File).where(File.id == id)
+async def delete_document(id: int, db_session: AsyncSession):
+    return await delete_document_by_id(id=id, db_session=db_session)
 
-    file_record = (
-        db_session.execute(stmt)
-        .scalar_one_or_none()
-    )
 
+async def get_file_by_id(id: int, db_session: AsyncSession):
+    
+    file_record = await get_file_id(id=id, db_session=db_session)
+    
     if not file_record:
         return None
-    print(file_record.name)
+
     response = get_file(file_id=id)
 
     try:

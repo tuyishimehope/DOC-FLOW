@@ -1,7 +1,14 @@
 import io
+from pathlib import Path
 
 from fastapi import UploadFile
 
+
+def get_file_extension(file: UploadFile) -> str:
+    if file.filename is None:
+        raise ValueError("Uploaded file has no filename")
+
+    return Path(file.filename).suffix.lstrip(".")
 
 def valid_type_document(file: UploadFile):
     if file.content_type == "application/pdf" or file.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":

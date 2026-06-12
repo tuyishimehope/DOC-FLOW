@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Body
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db_session
 from app.service.document.document import delete_document, get_document, get_documents, get_processing_result, get_processing_status, process_document
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/document", tags=["document"])
 
 
 @router.post("")
-async def post_document(file: UploadFile, processing_type: Processing_Type = Body(), instructions: str = Body(), db_session: Session = Depends(get_db_session)):
+async def post_document(file: UploadFile, processing_type: Processing_Type = Body(), instructions: str = Body(), db_session: AsyncSession = Depends(get_db_session)):
     result = valid_type_document(file=file)
     if not result:
         raise HTTPException(
@@ -22,9 +22,9 @@ async def post_document(file: UploadFile, processing_type: Processing_Type = Bod
 @router.get("/status/{processing_request_id}")
 async def get_status(
     processing_request_id: int,
-    db_session: Session = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session)
 ):
-    result = get_processing_status(
+    result = await get_processing_status(
         processing_request_id,
         db_session
     )
@@ -37,9 +37,9 @@ async def get_status(
 @router.get("/result/{processing_request_id}")
 async def get_result(
     processing_request_id: int,
-    db_session: Session = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session)
 ):
-    result = get_processing_result(
+    result = await get_processing_result(
         processing_request_id,
         db_session
     )
@@ -50,7 +50,7 @@ async def get_result(
 
 
 @router.get("/document/{id}")
-async def get_document_endpoint(id: int, db_session: Session = Depends(get_db_session)):
+async def get_document_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
     document = await get_document(id=id, db_session=db_session)
     if document:
         return document
@@ -59,12 +59,12 @@ async def get_document_endpoint(id: int, db_session: Session = Depends(get_db_se
 
 
 @router.get("")
-async def get_documents_endpoint(db_session: Session = Depends(get_db_session)):
+async def get_documents_endpoint(db_session: AsyncSession = Depends(get_db_session)):
     return await get_documents(db_session=db_session)
 
 
 @router.delete("/document/{id}")
-async def delete_document_endpoint(id: int, db_session: Session = Depends(get_db_session)):
+async def delete_document_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
     document = await delete_document(id=id, db_session=db_session)
     if document:
         return document

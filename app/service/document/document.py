@@ -1,4 +1,5 @@
 from fastapi import UploadFile
+import traceback
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -22,6 +23,9 @@ async def process_document(file: UploadFile, processing_type: Processing_Type, i
         document_object = await save_document(file=file, file_object=file_object, db_session=db_session)
 
         processing_request_object = await save_processing_request(document_object=document_object, processing_type=processing_type, instructions=instructions, db_session=db_session)
+        
+        if processing_request_object is None:
+            return
 
         start_processing.delay(
             processing_request_id=processing_request_object.id)
@@ -31,6 +35,7 @@ async def process_document(file: UploadFile, processing_type: Processing_Type, i
 
         return {"processing_request_id": processing_request_object.id, "status": processing_request_object.status}
     except Exception as e:
+        traceback.print_exc()
         print("An expected error occurred", e)
         await db_session.rollback()
 

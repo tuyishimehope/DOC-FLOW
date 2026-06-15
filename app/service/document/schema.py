@@ -26,5 +26,5 @@ class Processing_Job_Status(str, Enum):
     RUNNING = "RUNNING"
     RETRYING = "RETRYING"
     COMPLETED = "COMPLETED"
-    FAILING = "FAILING"
+    FAILED = "FAILED"
     DEAD_LETTER = "DEAD_LETTER"

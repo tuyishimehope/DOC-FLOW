@@ -1,16 +1,14 @@
 import asyncio
 from datetime import datetime
 
+from sqlalchemy import Select
 
 from app.service.document.schema import Processing_Job_Status, Processing_Type, Processing_status
 from app.service.file.file import get_file
 from app.service.openai.service import OpenaiService
 from app.utils.document import extract_text_from_doc, extract_text_from_pdf
-
 from app.tasks.celery_app import celery_app
-
-
-from app.db.session import SessionLocal
+from app.db.session import SessionLocal, SyncSession
 from app.models.schema import Document, Extracted_Result, File, Processing_Job, Processing_Request
 
 
@@ -21,23 +19,42 @@ from app.models.schema import Document, Extracted_Result, File, Processing_Job, 
     retry_kwargs={"max_retries": 3}
 )
 def start_processing(self, processing_request_id: int):
-
-    db_session = SessionLocal()
     try:
-        processing_request_statement = db_session.query(Processing_Request).where(
-            Processing_Request.id == processing_request_id
-        )
+        asyncio.run(process_document(
+            self=self,
+            processing_request_id=processing_request_id
+        ))
+    except Exception as e:
+        print("An unexpected error occurred", e)
 
-        processing_request_result = processing_request_statement.scalar()
 
-        document_statement = db_session.query(Document).where(
+async def process_document(self, processing_request_id: int):
+
+    db_session = SyncSession()
+    processing_request_result = None
+    job = None
+    try:
+        processing_request_statement = db_session.execute(Select(Processing_Request).where(Processing_Request.id == processing_request_id
+                                                                                           ))
+        processing_request_result = processing_request_statement.scalar_one_or_none()
+
+        if processing_request_result is None:
+            return
+
+        document_statement = db_session.execute(Select(Document).where(
             Document.id == processing_request_result.document_id
-        )
-        document_statement_result = document_statement.scalar()
+        ))
+        document_statement_result = document_statement.scalar_one_or_none()
 
-        file_statement = db_session.query(File).where(
-            File.id == document_statement_result.file_id)
+        if document_statement_result is None:
+            return
+
+        file_statement = db_session.execute(Select(File).where(
+            File.id == document_statement_result.file_id))
         file_statement_result = file_statement.scalar()
+
+        if file_statement_result is None:
+            return
 
         file_object = get_file(file_id=file_statement_result.id)
 
@@ -72,14 +89,14 @@ def start_processing(self, processing_request_id: int):
         db_session.commit()
 
         if processing_type == Processing_Type.DOCUMENT_SUMMARY:
-            result = asyncio.run(OpenaiService().generate_summary(
-                content=extracted_content, instructions=instructions))
+            result = await OpenaiService().generate_summary(
+                content=extracted_content, instructions=instructions)
         elif processing_type == Processing_Type.INVOICE_EXTRACTION:
-            result = asyncio.run(OpenaiService().get_invoice_metadata(
-                content=extracted_content, instructions=instructions))
+            result = await OpenaiService().get_invoice_metadata(
+                content=extracted_content, instructions=instructions)
         elif processing_type == Processing_Type.CONTRACT_METADATA:
-            result = asyncio.run(OpenaiService().get_contract_metadata(
-                content=extracted_content, instructions=instructions))
+            result = await OpenaiService().get_contract_metadata(
+                content=extracted_content, instructions=instructions)
         else:
             return
 
@@ -99,9 +116,12 @@ def start_processing(self, processing_request_id: int):
             db_session.commit()
 
     except Exception as e:
-        processing_request_result.status = (
-            Processing_status.FAILED
-        )
+        if processing_request_result:
+            processing_request_result.status = Processing_status.FAILED
+
+        if job:
+            job.status = Processing_Job_Status.FAILED
+            job.completed_at = datetime.now()
 
         db_session.commit()
 

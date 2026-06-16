@@ -7,8 +7,27 @@ from app.service.document.document import get_file_by_id
 router = APIRouter(prefix="/file", tags=["file"])
 
 
-@router.get("/{id}")
+@router.get("/{id}", status_code=status.HTTP_200_OK, summary="Get a file by id", description="You can get a file by id", responses={
+    200: {
+            "content": {
+                "application/pdf": {}
+            }
+            }
+})
 async def get_file_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
+    """
+    Get a file by id
+
+    Args:
+        id (int): id of the file
+        db_session (AsyncSession, optional): db session. Defaults to Depends(get_db_session).
+
+    Raises:
+        HTTPException: return expection when the file not found
+
+    Returns:
+        file: Returns a file 
+    """
     result = await get_file_by_id(id=id, db_session=db_session)
 
     if result:
@@ -16,7 +35,7 @@ async def get_file_endpoint(id: int, db_session: AsyncSession = Depends(get_db_s
             content=result["content"],
             media_type=result["content_type"],
             headers={
-                "Content-Disposition": 'attachment; filename="document.pdf"'
+                "Content-Disposition": f'attachment; filename="{result["name"]}"'
             }
         )
 

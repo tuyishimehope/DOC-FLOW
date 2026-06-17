@@ -10,7 +10,7 @@ router = APIRouter(prefix="/document", tags=["document"])
 
 
 @router.post("")
-async def post_document(file: UploadFile, processing_type: Processing_Type = Body(), instructions: str = Body(), db_session: AsyncSession = Depends(get_db_session)):
+async def post_document_endpoint(file: UploadFile, processing_type: Processing_Type = Body(), instructions: str = Body(), db_session: AsyncSession = Depends(get_db_session)):
     result = valid_type_document(file=file)
     if not result:
         raise HTTPException(
@@ -20,7 +20,7 @@ async def post_document(file: UploadFile, processing_type: Processing_Type = Bod
 
 
 @router.get("/status/{processing_request_id}")
-async def get_status(
+async def get_status_endpoint(
     processing_request_id: int,
     db_session: AsyncSession = Depends(get_db_session)
 ):
@@ -35,7 +35,7 @@ async def get_status(
 
 
 @router.get("/result/{processing_request_id}")
-async def get_result(
+async def get_result_endpoint(
     processing_request_id: int,
     db_session: AsyncSession = Depends(get_db_session)
 ):

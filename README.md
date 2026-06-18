@@ -13,5 +13,5 @@ python, fastapi, celery, docker, postgresql
 1. ```
     git clone git@github.com:tuyishimehope/DOC-FLOW.git 
     ```
-2. create a PR
+2. create a pull request 
 3. start contributing

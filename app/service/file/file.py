@@ -4,7 +4,7 @@ from fastapi import UploadFile
 
 from app.core.minio import minio_client
 
-BUCKET_NAME = os.getenv("MINIO_BUCKET", "docflow-bucket")
+BUCKET_NAME = os.getenv("MINIO_BUCKET", "")
 
 
 async def post_file(file: UploadFile, file_id: str):

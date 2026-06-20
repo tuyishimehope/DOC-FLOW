@@ -8,7 +8,7 @@ from app.utils.document import get_file_extension
 from .schema import Processing_Type
 from app.service.document.schema import Processing_status, Processing_Type
 from app.service.file.file import post_file, get_file
-from app.service.document.crud import delete_document_by_id, get_all_documents, get_document_by_id, get_file_id, get_processing_request_result, get_processing_request_status, save_document, save_file, save_processing_request
+from app.service.document.crud import delete_document_by_id, get_all_documents, get_document_by_id, get_file_id, get_processing_request_result, get_processing_request_status, save_document, save_file, save_processing_request, get_total_no_of_documents
 
 
 
@@ -72,9 +72,11 @@ async def get_document(id: int, db_session: AsyncSession):
     return result
 
 
-async def get_documents(db_session: AsyncSession):
-    result = await get_all_documents(db_session=db_session)
-    return result
+async def get_documents(page: int, limit: int, db_session: AsyncSession):
+    result = await get_all_documents(page=page,limit=limit, db_session=db_session)
+    total_documents = await get_total_no_of_documents(db_session=db_session)
+    
+    return result, total_documents
 
 
 async def delete_document(id: int, db_session: AsyncSession):

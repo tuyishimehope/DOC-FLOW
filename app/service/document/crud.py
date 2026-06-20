@@ -1,4 +1,4 @@
-from sqlalchemy import Select
+from sqlalchemy import Select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.schema import Document, Extracted_Result, File, Processing_Request
@@ -66,13 +66,18 @@ async def get_document_by_id(id: int, db_session: AsyncSession):
     return response
 
 
-async def get_all_documents(db_session: AsyncSession):
-    statement = Select(Document)
+async def get_all_documents(page: int, limit:int, db_session: AsyncSession):
+    statement = Select(Document).limit(limit)
     result =  await db_session.execute(statement)
     response = result.scalars().all()
     return response
 
-
+async def get_total_no_of_documents(db_session: AsyncSession):
+    statement = Select(func.count(Document.id))
+    result = await db_session.execute(statement)
+    response = result.scalars().all()
+    return response
+    
 async def delete_document_by_id(id: int, db_session: AsyncSession):
     try:
         document = get_document_by_id(id=id, db_session=db_session)

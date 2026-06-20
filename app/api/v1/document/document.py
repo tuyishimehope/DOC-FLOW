@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Body
+from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Body, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db_session
@@ -58,9 +58,10 @@ async def get_document_endpoint(id: int, db_session: AsyncSession = Depends(get_
                         detail="Document Not Found")
 
 
-@router.get("")
-async def get_documents_endpoint(db_session: AsyncSession = Depends(get_db_session)):
-    return await get_documents(db_session=db_session)
+@router.get("?")
+async def get_documents_endpoint(page: int = Query(default=1, title="Current page", description="The current page to display items"), limit: int = Query(default=10, title="limit", description="limit of items per page", gt=1, le=50), db_session: AsyncSession = Depends(get_db_session)):
+    result, total_documents =  await get_documents(page=page, limit=limit, db_session=db_session)
+    return result, total_documents
 
 
 @router.delete("/document/{id}")

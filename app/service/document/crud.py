@@ -59,7 +59,7 @@ async def get_processing_request_result(processing_request_id: int, db_session: 
     return response
 
 
-async def get_document_by_id(id: int, db_session: AsyncSession):
+async def get_document_by_id(id: int, db_session: AsyncSession) -> Document | None:
     statement = Select(Document).where(Document.id == id)
     result = await db_session.execute(statement)
     response = result.scalar_one_or_none()
@@ -75,9 +75,10 @@ async def get_all_documents(page: int, limit:int, db_session: AsyncSession):
 async def get_total_no_of_documents(db_session: AsyncSession):
     statement = Select(func.count(Document.id))
     result = await db_session.execute(statement)
-    response = result.scalars().all()
+    response = result.scalar_one()
     return response
-    
+
+
 async def delete_document_by_id(id: int, db_session: AsyncSession):
     try:
         document = get_document_by_id(id=id, db_session=db_session)

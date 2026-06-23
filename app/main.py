@@ -1,7 +1,9 @@
 import os
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 from app.api.v1.document.document import router as document_router
 from app.api.v1.file.file import router as file_router
@@ -9,17 +11,27 @@ from app.db.engine import engine
 from app.core.minio import minio_client
 
 
-@asynccontextmanager
+logger = logging.getLogger(__name__)
+
+
+class StartResponse(BaseModel):
+    status: str
+    service: str
+    message: str
+
+
+@asynccontextmanager    
 async def lifespan(app: FastAPI):
-    print("Checking DB connection...")
+    logger.info("Checking DB connection")
 
     async with engine.connect() as conn:
-        print("Database Connected!")
+        logger.info("Database connected")
 
     bucket_name = os.getenv("MINIO_BUCKET", "")
 
     if not minio_client.bucket_exists(bucket_name):
         minio_client.make_bucket(bucket_name)
+        logger.info("Created MinIO bucket", extra={"bucket_name": bucket_name})
 
     yield
 
@@ -31,10 +43,20 @@ app.include_router(router=file_router)
 
 
 
-@app.get("/")
-def ready():
-    return "APP IS RUNNING"
+@app.get("/", response_model=StartResponse)
+def root():
+    return start()
 
-@app.get("/health")
+
+@app.get("/start", response_model=StartResponse)
+def start():
+    return StartResponse(
+        status="ok",
+        service="doc-flow-backend",
+        message="App is running",
+    )
+
+
+@app.get("/health", response_model=StartResponse)
 def health():
-    return "APP IS RUNNING"
+    return start()

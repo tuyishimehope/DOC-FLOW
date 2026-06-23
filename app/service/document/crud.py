@@ -1,7 +1,7 @@
 from sqlalchemy import Select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.schema import Document, Extracted_Result, File, Processing_Request
+from app.models.schema import Document, Extracted_Result, File, Processing_Request, Processing_Job
 from app.service.document.schema import Processing_status
 
 
@@ -67,7 +67,8 @@ async def get_document_by_id(id: int, db_session: AsyncSession) -> Document | No
 
 
 async def get_all_documents(page: int, limit:int, db_session: AsyncSession):
-    statement = Select(Document).limit(limit)
+    offset = (page - 1) * limit
+    statement = Select(Document).offset(offset).limit(limit)
     result =  await db_session.execute(statement)
     response = result.scalars().all()
     return response
@@ -81,7 +82,7 @@ async def get_total_no_of_documents(db_session: AsyncSession):
 
 async def delete_document_by_id(id: int, db_session: AsyncSession):
     try:
-        document = get_document_by_id(id=id, db_session=db_session)
+        document = await get_document_by_id(id=id, db_session=db_session)
         if document:
             await db_session.delete(document)
             await db_session.commit()
@@ -97,3 +98,9 @@ async def get_file_id(id: int, db_session: AsyncSession):
     result = file_record.scalar_one_or_none()
 
     return result
+
+async def get_jobs(id: int, db_session: AsyncSession) -> list[Processing_Job]:
+    stmt = Select(Processing_Job).where(Processing_Job.processing_request_id == id)
+    processing_job_record = await db_session.execute(stmt)
+    result = processing_job_record.scalars().all()
+    return list(result)

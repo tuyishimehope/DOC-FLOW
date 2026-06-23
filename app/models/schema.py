@@ -78,6 +78,9 @@ class Processing_Request(Base):
     processing_jobs: Mapped[List["Processing_Job"]] = relationship(
         "Processing_Job", back_populates="processing_request", cascade="all, delete-orphan"
     )
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
 
 class Extracted_Result(Base):
@@ -113,9 +116,13 @@ class Processing_Job(Base):
     attempt_number: Mapped[int] = mapped_column(
         Integer, default=1, nullable=False)
     started_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True)
-    completed_at: Mapped[Optional[datetime]
-                         ] = mapped_column(DateTime, nullable=True)
+        DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime] = mapped_column(
+            DateTime(timezone=True),
+            server_default=func.now(),
+            onupdate=func.now(),
+            nullable=True
+        )
     failure_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     worker_name: Mapped[Optional[str]] = mapped_column(
         String(100), nullable=True)

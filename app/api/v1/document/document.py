@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Body,
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db_session
-from app.service.document.document import delete_document, get_document, get_documents, get_processing_result, get_processing_status, process_document
+from app.service.document.document import delete_document, get_document, get_documents, get_processing_result, get_processing_status, get_status_jobs, process_document
 from app.service.document.schema import Processing_Type
 from app.utils.document import valid_type_document
 
@@ -60,7 +60,7 @@ async def get_document_endpoint(id: int, db_session: AsyncSession = Depends(get_
 
 @router.get("?")
 async def get_documents_endpoint(page: int = Query(default=1, title="Current page", description="The current page to display items"), limit: int = Query(default=10, title="limit", description="limit of items per page", gt=1, le=50), db_session: AsyncSession = Depends(get_db_session)):
-    result, total_documents, total_documents_per_page =  await get_documents(page=page, limit=limit, db_session=db_session)
+    result, total_documents, total_documents_per_page = await get_documents(page=page, limit=limit, db_session=db_session)
     return {"data": result, "total_documents": total_documents, "total_documents_per_page": total_documents_per_page}
 
 
@@ -71,3 +71,12 @@ async def delete_document_endpoint(id: int, db_session: AsyncSession = Depends(g
         return document
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Document Not Found")
+
+
+@router.get("/{id}/jobs")
+async def get_status_jobs_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
+    response = await get_status_jobs(id=id, db_session=db_session)
+    if response:
+        return [{"attempt": data.attempt_number, "status": data.status, "created_at": data.started_at, "completed_at": data.completed_at} for data in response]
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")

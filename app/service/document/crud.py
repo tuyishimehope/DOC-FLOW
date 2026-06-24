@@ -104,3 +104,9 @@ async def get_jobs(id: int, db_session: AsyncSession) -> list[Processing_Job]:
     processing_job_record = await db_session.execute(stmt)
     result = processing_job_record.scalars().all()
     return list(result)
+
+async def get_processing_request_by_id(id: int, db_session: AsyncSession):
+    stmt = Select(Processing_Request).where(Processing_Request.id == id)
+    record = await  db_session.execute(stmt)
+    result = record.scalar_one_or_none();
+    return result

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Body,
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db_session
-from app.service.document.document import delete_document, get_document, get_documents, get_processing_result, get_processing_status, get_status_jobs, process_document
+from app.service.document.document import delete_document, get_document, get_documents, get_processing_result, get_processing_status, get_status_jobs, process_document, get_processing_request
 from app.service.document.schema import Processing_Type
 from app.utils.document import valid_type_document
 
@@ -80,3 +80,12 @@ async def get_status_jobs_endpoint(id: int, db_session: AsyncSession = Depends(g
         return [{"attempt": data.attempt_number, "status": data.status, "created_at": data.started_at, "completed_at": data.completed_at} for data in response]
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+
+@router.get("{id}")
+async def get_processing_request_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
+    response = await get_processing_request(id=id, db_session=db_session)
+    if response:
+        return response
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Request not found")

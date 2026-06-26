@@ -52,7 +52,7 @@ async def get_result_endpoint(
 @router.get("/document/{id}")
 async def get_document_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
     document = await get_document(id=id, db_session=db_session)
-    if document:
+    if document is not None:
         return document
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Document Not Found")
@@ -67,7 +67,7 @@ async def get_documents_endpoint(page: int = Query(default=1, title="Current pag
 @router.delete("/document/{id}")
 async def delete_document_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
     document = await delete_document(id=id, db_session=db_session)
-    if document:
+    if document is not None:
         return document
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Document Not Found")
@@ -76,7 +76,7 @@ async def delete_document_endpoint(id: int, db_session: AsyncSession = Depends(g
 @router.get("/{id}/jobs")
 async def get_status_jobs_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
     response = await get_status_jobs(id=id, db_session=db_session)
-    if response:
+    if response is not None:
         return [{"attempt": data.attempt_number, "status": data.status, "created_at": data.started_at, "completed_at": data.completed_at} for data in response]
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
@@ -85,7 +85,7 @@ async def get_status_jobs_endpoint(id: int, db_session: AsyncSession = Depends(g
 @router.get("{id}")
 async def get_processing_request_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
     response = await get_processing_request(id=id, db_session=db_session)
-    if response:
+    if response is not None:
         return response
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Request not found")

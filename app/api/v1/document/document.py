@@ -8,7 +8,7 @@ from app.service.document.schema import Processing_Type
 from app.utils.document import valid_type_document
 from app.service.auth.auth import CurrentUser
 
-router = APIRouter(prefix="/document", tags=["document"])
+router = APIRouter(prefix="/api/v1/document", tags=["document"])
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

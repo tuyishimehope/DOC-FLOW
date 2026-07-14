@@ -19,6 +19,8 @@ class Document(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False)
     deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     processing_requests: Mapped[List["Processing_Request"]] = relationship(
         "Processing_Request", back_populates="document", cascade="all, delete-orphan"
@@ -78,8 +80,9 @@ class Processing_Request(Base):
     processing_jobs: Mapped[List["Processing_Job"]] = relationship(
         "Processing_Job", back_populates="processing_request", cascade="all, delete-orphan"
     )
-    
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
 
@@ -118,11 +121,11 @@ class Processing_Job(Base):
     started_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime] = mapped_column(
-            DateTime(timezone=True),
-            server_default=func.now(),
-            onupdate=func.now(),
-            nullable=True
-        )
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=True
+    )
     failure_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     worker_name: Mapped[Optional[str]] = mapped_column(
         String(100), nullable=True)

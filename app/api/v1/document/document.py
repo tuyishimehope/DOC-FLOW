@@ -82,7 +82,7 @@ async def get_status_jobs_endpoint(id: int, db_session: AsyncSession = Depends(g
         status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
 
-@router.get("{id}")
+@router.get("/processing_request/{id}")
 async def get_processing_request_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
     response = await get_processing_request(id=id, db_session=db_session)
     if response is not None:

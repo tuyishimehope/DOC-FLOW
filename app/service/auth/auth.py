@@ -25,7 +25,7 @@ async def authenticate(email: str, password: str, db_session: AsyncSession,):
         raise e
 
 
-async def create_user(first_name: str, last_name: str, email: str, password: str, db_session: AsyncSession,) -> bool:
+async def create_user(first_name: str, last_name: str, email: str, password: str, db_session: AsyncSession,) :
     try:
         ph = PasswordHasher()
 
@@ -37,7 +37,7 @@ async def create_user(first_name: str, last_name: str, email: str, password: str
         db_session.add(user)
         await db_session.commit()
         await db_session.refresh(user)
-        return True
+        return user
     except Exception as e:
         print(e)
         await db_session.rollback()

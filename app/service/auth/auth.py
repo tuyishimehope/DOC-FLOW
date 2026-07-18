@@ -1,14 +1,12 @@
-from app.models.schema import User
 from argon2 import PasswordHasher
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import Select
 
+from app.models.schema import User
+from app.service.auth.crud import get_user_by_email
 
-async def authenticate(email: str, password: str, db_session: AsyncSession,):
+async def authenticate(email: str, password: str, db_session: AsyncSession):
     try:
-        statement = Select(User).where(User.email == email)
-        results = await db_session.execute(statement)
-        user_obj = results.scalar_one_or_none()
+        user_obj = await get_user_by_email(email, db_session)
         if user_obj is None:
             raise
 

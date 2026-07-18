@@ -35,6 +35,10 @@ class Document(Base):
         "File",
         back_populates="document",
     )
+    
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    
+    user: Mapped["User"] = relationship("User", back_populates="documens")
 
 
 class File(Base):
@@ -138,3 +142,26 @@ class Processing_Job(Base):
     __table_args__ = (
         Index("ix_processing_job_status_attempt", "status", "attempt_number"),
     )
+
+
+class User(Base):
+    __tablename__ = "user"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    first_name: Mapped[str] = mapped_column(String(30), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(30), nullable=False)
+    email: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(
+        Text(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    
+    documents: Mapped[list[Document]] = relationship("document", back_populates="user",cascade="all, delete-orphan",)

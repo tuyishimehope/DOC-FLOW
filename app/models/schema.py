@@ -38,7 +38,7 @@ class Document(Base):
     
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
     
-    user: Mapped["User"] = relationship("User", back_populates="documens")
+    user: Mapped["User"] = relationship("User", back_populates="documents")
 
 
 class File(Base):
@@ -164,4 +164,4 @@ class User(Base):
     )
     deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     
-    documents: Mapped[list[Document]] = relationship("document", back_populates="user",cascade="all, delete-orphan",)
+    documents: Mapped[List["Document"]] = relationship("Document", back_populates="user",cascade="all, delete-orphan")

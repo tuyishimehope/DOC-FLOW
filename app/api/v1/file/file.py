@@ -1,9 +1,11 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db_session
 from app.service.auth.auth import CurrentUser
-from app.service.document.document import get_file_by_id
+from app.service.file.file import get_file_by_id, delete_file_by_id
 
 router = APIRouter(prefix="/file", tags=["file"])
 
@@ -42,3 +44,10 @@ async def get_file_endpoint(id: int, current_user: CurrentUser, db_session: Asyn
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="file not found")
+
+
+@router.delete("/{id}")
+async def delete_file(id: int, current_user: CurrentUser, db_session: Annotated[AsyncSession, Depends(get_db_session)]):
+    result = await delete_file_by_id(id=id, current_user=current_user, db_session=db_session)
+
+    return result

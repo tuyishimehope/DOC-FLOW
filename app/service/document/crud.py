@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.schema import Document, Extracted_Result, File, Processing_Request, Processing_Job, User
 from app.service.auth.auth import CurrentUser
 from app.service.document.schema import Processing_status
+from app.service.file.file import delete_file_by_id
 
 
 async def save_file(file, file_name, db_session: AsyncSession):
@@ -93,24 +94,16 @@ async def get_total_no_of_documents(db_session: AsyncSession, user_id: int):
     return response
 
 
-async def delete_document_by_id(id: int, db_session: AsyncSession, user_id: int):
+async def delete_document_by_id(id: int, current_user: CurrentUser, db_session: AsyncSession):
     try:
-        document = await get_document_by_id(id=id, db_session=db_session, user_id=user_id)
+        document = await get_document_by_id(id=id, db_session=db_session, user_id=current_user.id)
         if document:
             await db_session.delete(document)
+            await delete_file_by_id(id=document.file_id, current_user=current_user, db_session=db_session)
             await db_session.commit()
     except:
         await db_session.rollback()
 
-
-async def get_file_id(id: int, current_user: CurrentUser, db_session: AsyncSession):
-    stmt = Select(File).join(Document).where(File.id == id, Document.user_id == current_user.id)
-
-    file_record = await db_session.execute(stmt)
-
-    result = file_record.scalar_one_or_none()
-
-    return result
 
 
 async def get_jobs(id: int, db_session: AsyncSession) -> list[Processing_Job]:

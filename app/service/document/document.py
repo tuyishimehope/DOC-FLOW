@@ -9,7 +9,7 @@ from app.utils.document import get_file_extension
 from .schema import Processing_Type
 from app.service.document.schema import Processing_status, Processing_Type
 from app.service.file.file import post_file, get_file
-from app.service.document.crud import delete_document_by_id, get_all_documents, get_document_by_id, get_file_id, get_jobs, get_processing_request_result, get_processing_request_status, save_document, save_file, save_processing_request, get_total_no_of_documents, get_processing_request_by_id
+from app.service.document.crud import delete_document_by_id, get_all_documents, get_document_by_id, get_jobs, get_processing_request_result, get_processing_request_status, save_document, save_file, save_processing_request, get_total_no_of_documents, get_processing_request_by_id
 from app.service.auth.crud import get_user_by_id
 from pydantic import EmailStr
 
@@ -87,30 +87,10 @@ async def get_documents(page: int, limit: int, db_session: AsyncSession, user_id
     return result, total_documents
 
 
-async def delete_document(id: int, db_session: AsyncSession, user_id: int):
-    return await delete_document_by_id(id=id, db_session=db_session, user_id=user_id)
+async def delete_document(id: int, current_user: CurrentUser, db_session: AsyncSession):
+    return await delete_document_by_id(id=id, current_user=current_user, db_session=db_session)
 
 
-async def get_file_by_id(id: int, current_user: CurrentUser, db_session: AsyncSession):
-
-    file_record = await get_file_id(id=id, current_user=current_user, db_session=db_session)
-
-    if not file_record:
-        return None
-
-    response = get_file(file_id=id)
-
-    try:
-        content = response.read()
-    finally:
-        response.close()
-        response.release_conn()
-
-    return {
-        "name": file_record.name,
-        "content": content,
-        "content_type": file_record.content_type
-    }
 
 
 async def get_status_jobs(id: int, db_session: AsyncSession):

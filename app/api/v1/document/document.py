@@ -86,7 +86,7 @@ async def delete_document_endpoint(current_user: CurrentUser, id: int, db_sessio
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Not authorized to view document")
 
-    document = await delete_document(id=id, db_session=db_session, user_id=current_user.id)
+    document = await delete_document(id=id, db_session=db_session, current_user=current_user)
     if document is not None:
         return document
 

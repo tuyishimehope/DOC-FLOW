@@ -9,9 +9,11 @@ from .schema import Processing_Type
 from app.service.document.schema import Processing_status, Processing_Type
 from app.service.file.file import post_file, get_file
 from app.service.document.crud import delete_document_by_id, get_all_documents, get_document_by_id, get_file_id, get_jobs, get_processing_request_result, get_processing_request_status, save_document, save_file, save_processing_request, get_total_no_of_documents, get_processing_request_by_id
+from app.service.auth.crud import get_user_by_email
+from pydantic import EmailStr
 
 
-async def process_document(file: UploadFile, processing_type: Processing_Type, instructions: str, db_session: AsyncSession):
+async def process_document(email: EmailStr, file: UploadFile, processing_type: Processing_Type, instructions: str, db_session: AsyncSession):
     try:
         file_name = get_file_extension(file)
 
@@ -19,7 +21,12 @@ async def process_document(file: UploadFile, processing_type: Processing_Type, i
 
         await post_file(file=file, file_id=str(file_object.id))
 
-        document_object = await save_document(file=file, file_object=file_object, db_session=db_session)
+        user = await get_user_by_email(db_session=db_session, email=email)
+
+        if user is None:
+            return
+
+        document_object = await save_document(user_id=user.id, file=file, file_object=file_object, db_session=db_session)
 
         processing_request_object = await save_processing_request(document_object=document_object, processing_type=processing_type, instructions=instructions, db_session=db_session)
 

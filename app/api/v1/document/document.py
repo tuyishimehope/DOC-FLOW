@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Body, Query
+from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Body, Query, Form
+from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db_session
@@ -10,13 +11,13 @@ router = APIRouter(prefix="/document", tags=["document"])
 
 
 @router.post("")
-async def post_document_endpoint(file: UploadFile, processing_type: Processing_Type = Body(), instructions: str = Body(), db_session: AsyncSession = Depends(get_db_session)):
+async def post_document_endpoint(file: UploadFile, email: EmailStr = Form(...), processing_type: Processing_Type = Body(), instructions: str = Body(), db_session: AsyncSession = Depends(get_db_session)):
     result = valid_type_document(file=file)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File Format Not Accepted")
 
-    return await process_document(file=file, processing_type=processing_type, instructions=instructions, db_session=db_session)
+    return await process_document(email=email, file=file, processing_type=processing_type, instructions=instructions, db_session=db_session)
 
 
 @router.get("/status/{processing_request_id}")

@@ -1,18 +1,28 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from fastapi import Body
+
 
 class LoginRequest(BaseModel):
     email: EmailStr = Body()
     password: str = Body()
-    
-class CreateUserRequest(BaseModel):
+
+
+class UserBase(BaseModel):
     first_name: str = Body()
     last_name: str = Body()
     email: EmailStr = Body()
+
+
+class CreateUserRequest(UserBase):
     password: str = Body()
-    
-class UserResponse(BaseModel):
-    id: int 
-    first_name: str
-    last_name: str
-    email: EmailStr
+
+
+class UserResponse(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

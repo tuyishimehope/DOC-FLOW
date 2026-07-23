@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db_session
+from app.service.auth.auth import CurrentUser
 from app.service.document.document import get_file_by_id
 
 router = APIRouter(prefix="/file", tags=["file"])
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/file", tags=["file"])
             }
             }
 })
-async def get_file_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
+async def get_file_endpoint(id: int, current_user: CurrentUser, db_session: AsyncSession = Depends(get_db_session)):
     """
     Get a file by id
 
@@ -28,7 +29,7 @@ async def get_file_endpoint(id: int, db_session: AsyncSession = Depends(get_db_s
     Returns:
         file: Returns a file 
     """
-    result = await get_file_by_id(id=id, db_session=db_session)
+    result = await get_file_by_id(id=id, current_user=current_user, db_session=db_session)
 
     if result:
         return Response(

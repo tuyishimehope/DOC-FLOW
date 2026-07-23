@@ -103,8 +103,8 @@ async def delete_document_by_id(id: int, db_session: AsyncSession, user_id: int)
         await db_session.rollback()
 
 
-async def get_file_id(id: int, db_session: AsyncSession):
-    stmt = Select(File).where(File.id == id)
+async def get_file_id(id: int, current_user: CurrentUser, db_session: AsyncSession):
+    stmt = Select(File).join(Document).where(File.id == id, Document.user_id == current_user.id)
 
     file_record = await db_session.execute(stmt)
 

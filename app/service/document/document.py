@@ -91,9 +91,9 @@ async def delete_document(id: int, db_session: AsyncSession, user_id: int):
     return await delete_document_by_id(id=id, db_session=db_session, user_id=user_id)
 
 
-async def get_file_by_id(id: int, db_session: AsyncSession):
+async def get_file_by_id(id: int, current_user: CurrentUser, db_session: AsyncSession):
 
-    file_record = await get_file_id(id=id, db_session=db_session)
+    file_record = await get_file_id(id=id, current_user=current_user, db_session=db_session)
 
     if not file_record:
         return None

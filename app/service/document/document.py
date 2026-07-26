@@ -9,11 +9,11 @@ from .schema import Processing_Type
 from app.service.document.schema import Processing_status, Processing_Type
 from app.service.file.file import post_file, get_file
 from app.service.document.crud import delete_document_by_id, get_all_documents, get_document_by_id, get_file_id, get_jobs, get_processing_request_result, get_processing_request_status, save_document, save_file, save_processing_request, get_total_no_of_documents, get_processing_request_by_id
-from app.service.auth.crud import get_user_by_email
+from app.service.auth.crud import get_user_by_id
 from pydantic import EmailStr
 
 
-async def process_document(email: EmailStr, file: UploadFile, processing_type: Processing_Type, instructions: str, db_session: AsyncSession):
+async def process_document(id: int, file: UploadFile, processing_type: Processing_Type, instructions: str, db_session: AsyncSession):
     try:
         file_name = get_file_extension(file)
 
@@ -21,7 +21,7 @@ async def process_document(email: EmailStr, file: UploadFile, processing_type: P
 
         await post_file(file=file, file_id=str(file_object.id))
 
-        user = await get_user_by_email(db_session=db_session, email=email)
+        user = await get_user_by_id(db_session=db_session, id=id)
 
         if user is None:
             return
@@ -73,19 +73,19 @@ async def get_processing_result(
     return result.content_json
 
 
-async def get_document(id: int, db_session: AsyncSession):
-    result = await get_document_by_id(id=id, db_session=db_session)
+async def get_document(id: int, db_session: AsyncSession, user_id: int):
+    result = await get_document_by_id(id=id, db_session=db_session, user_id=user_id)
     return result
 
 
-async def get_documents(page: int, limit: int, db_session: AsyncSession):
-    result = await get_all_documents(page=page, limit=limit, db_session=db_session)
-    total_documents = await get_total_no_of_documents(db_session=db_session)
+async def get_documents(page: int, limit: int, db_session: AsyncSession, user_id: int):
+    result = await get_all_documents(page=page, limit=limit, db_session=db_session, user_id=user_id)
+    total_documents = await get_total_no_of_documents(db_session=db_session, user_id=user_id)
     return result, total_documents
 
 
-async def delete_document(id: int, db_session: AsyncSession):
-    return await delete_document_by_id(id=id, db_session=db_session)
+async def delete_document(id: int, db_session: AsyncSession, user_id: int):
+    return await delete_document_by_id(id=id, db_session=db_session, user_id=user_id)
 
 
 async def get_file_by_id(id: int, db_session: AsyncSession):

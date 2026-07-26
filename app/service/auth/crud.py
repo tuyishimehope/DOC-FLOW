@@ -8,3 +8,9 @@ async def get_user_by_email(email: str, db_session: AsyncSession):
     results = await db_session.execute(statement)
     user_obj = results.scalar_one_or_none()
     return user_obj
+
+async def get_user_by_id(id: int, db_session: AsyncSession):
+    statement = Select(User).where(User.id == id)
+    results = await db_session.execute(statement)
+    user_obj = results.scalar_one_or_none()
+    return user_obj

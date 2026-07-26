@@ -1,11 +1,16 @@
 from datetime import timezone, datetime, timedelta
+from typing import Annotated
+from alembic.util import status
+from fastapi import Depends, HTTPException
 import jwt
 from pwdlib import PasswordHash
 from fastapi.security import OAuth2PasswordBearer
 from argon2 import PasswordHasher
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+from app.db.dependencies import get_db_session
 from config import settings
 from app.models.schema import User
 from app.service.auth.crud import get_user_by_email
@@ -72,3 +77,39 @@ async def create_user(first_name: str, last_name: str, email: str, password: str
         print(e)
         await db_session.rollback()
         raise e
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+) -> User:
+    user_id = verify_access_token(token)
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        user_id_int = int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    result = await db.execute(
+        select(User).where(User.id == user_id_int),
+    )
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+
+CurrentUser = Annotated[User, Depends(get_current_user)]

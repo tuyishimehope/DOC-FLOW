@@ -60,31 +60,34 @@ async def get_processing_request_result(processing_request_id: int, db_session: 
     return response
 
 
-async def get_document_by_id(id: int, db_session: AsyncSession) -> Document | None:
-    statement = Select(Document).where(Document.id == id)
+async def get_document_by_id(id: int, db_session: AsyncSession, user_id: int) -> Document | None:
+    statement = Select(Document).where(
+        Document.id == id, Document.user_id == user_id)
     result = await db_session.execute(statement)
     response = result.scalar_one_or_none()
     return response
 
 
-async def get_all_documents(page: int, limit: int, db_session: AsyncSession):
+async def get_all_documents(page: int, limit: int, db_session: AsyncSession, user_id: int):
     offset = (page - 1) * limit
-    statement = Select(Document).offset(offset).limit(limit)
+    statement = Select(Document).where(Document.user_id ==
+                                       user_id).offset(offset).limit(limit)
     result = await db_session.execute(statement)
     response = result.scalars().all()
     return response
 
 
-async def get_total_no_of_documents(db_session: AsyncSession):
-    statement = Select(func.count(Document.id))
+async def get_total_no_of_documents(db_session: AsyncSession, user_id: int):
+    statement = Select(func.count(Document.id)).where(
+        Document.user_id == user_id)
     result = await db_session.execute(statement)
     response = result.scalar_one()
     return response
 
 
-async def delete_document_by_id(id: int, db_session: AsyncSession):
+async def delete_document_by_id(id: int, db_session: AsyncSession, user_id: int):
     try:
-        document = await get_document_by_id(id=id, db_session=db_session)
+        document = await get_document_by_id(id=id, db_session=db_session, user_id=user_id)
         if document:
             await db_session.delete(document)
             await db_session.commit()

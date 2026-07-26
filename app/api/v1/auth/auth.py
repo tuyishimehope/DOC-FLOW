@@ -9,10 +9,11 @@ from sqlalchemy import func, select
 from app.service.auth.auth import authenticate, create_user
 from app.db.dependencies import get_db_session
 from app.service.auth.schema import LoginRequest, CreateUserRequest, UserResponse
-from app.service.auth.auth import create_access_token, verify_access_token, hash_password, verify_password, oauth2_scheme
+from app.service.auth.auth import create_access_token, verify_password
 from app.service.auth.schema import Token
 from app.models import schema
 from config import settings
+from app.service.auth.auth import CurrentUser
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -24,7 +25,8 @@ async def login(login_info: LoginRequest, db_session: AsyncSession = Depends(get
         return result
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                         detail="Email or password not correct")
-    
+
+
 @router.post("/token", response_model=Token)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -49,48 +51,20 @@ async def login_for_access_token(
         )
 
     # Create access token with user id as subject
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token_expires = timedelta(
+        minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": str(user.id)},
         expires_delta=access_token_expires,
     )
     return Token(access_token=access_token, token_type="bearer")
 
+
 @router.get("/me")
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    db: Annotated[AsyncSession, Depends(get_db_session)],
+    current_user: CurrentUser
 ):
-    """Get the currently authenticated user."""
-    user_id = verify_access_token(token)
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Validate user_id is a valid integer (defense against malformed JWT)
-    try:
-        user_id_int = int(user_id)
-    except (TypeError, ValueError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    result = await db.execute(
-        select(schema.User).where(schema.User.id == user_id_int),
-    )
-    user = result.scalars().first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return user
+    return current_user
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
@@ -100,4 +74,5 @@ async def signup(user: CreateUserRequest, db_session: AsyncSession = Depends(get
         if result:
             return UserResponse(id=result.id, first_name=result.first_name, last_name=result.last_name, email=result.email)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="An unexpected error occurred")

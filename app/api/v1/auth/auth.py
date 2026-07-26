@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 from app.service.auth.auth import authenticate, create_user, delete_user_by_id, get_all_users, update_user
 from app.db.dependencies import get_db_session
-from app.service.auth.schema import LoginRequest, CreateUserRequest, UserBase, UserResponse, UserUpdate
+from app.service.auth.schema import LoginRequest, CreateUserRequest, UserResponse, UserUpdate
 from app.service.auth.auth import create_access_token, verify_password
 from app.service.auth.schema import Token
 from app.models import schema

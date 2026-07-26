@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from app.db.dependencies import get_db_session
-from app.service.auth.schema import LoginRequest, UserBase, UserUpdate
+from app.service.auth.schema import LoginRequest, UserUpdate
 from config import settings
 from app.models.schema import User
 from app.service.auth.crud import get_count_users, get_user_by_email, get_users

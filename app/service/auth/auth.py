@@ -133,10 +133,14 @@ async def get_all_users(limit: int, page: int, db_session: AsyncSession):
 
 
 async def update_user(
+    id: int,
     user_info: UserUpdate,
     current_user: CurrentUser,
     db_session: AsyncSession,
 ):
+    if id != current_user.id:
+        return None
+
     statement = select(User).where(User.id == current_user.id)
 
     result = await db_session.execute(statement)
@@ -157,12 +161,12 @@ async def update_user(
 
 
 async def delete_user_by_id(id: int,
-                      current_user: CurrentUser,
-                      db_session: AsyncSession,
-                      ):
+                            current_user: CurrentUser,
+                            db_session: AsyncSession,
+                            ):
     if id != current_user.id:
         return None
-    
+
     statement = select(User).where(User.id == current_user.id)
 
     result = await db_session.execute(statement)
@@ -170,7 +174,6 @@ async def delete_user_by_id(id: int,
 
     if user is None:
         return None
-    
+
     user.deleted_at = datetime.now(timezone.utc)
     await db_session.commit()
-

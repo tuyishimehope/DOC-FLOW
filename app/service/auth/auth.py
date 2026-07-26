@@ -14,7 +14,7 @@ from app.db.dependencies import get_db_session
 from app.service.auth.schema import LoginRequest
 from config import settings
 from app.models.schema import User
-from app.service.auth.crud import get_user_by_email
+from app.service.auth.crud import get_count_users, get_user_by_email, get_users
 
 
 password_hash = PasswordHash.recommended()
@@ -123,3 +123,10 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def get_all_users(limit: int, page: int, db_session: AsyncSession):
+
+    total_no_users = await get_count_users(db_session)
+    users = await get_users(limit, page, db_session)
+    return users, total_no_users

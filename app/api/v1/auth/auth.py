@@ -1,12 +1,12 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
-from app.service.auth.auth import authenticate, create_user
+from app.service.auth.auth import authenticate, create_user, get_all_users
 from app.db.dependencies import get_db_session
 from app.service.auth.schema import LoginRequest, CreateUserRequest, UserResponse
 from app.service.auth.auth import create_access_token, verify_password
@@ -18,16 +18,7 @@ from app.service.auth.auth import CurrentUser
 router = APIRouter(prefix="/api/users", tags=["users"])
 
 
-@router.post("/login", status_code=status.HTTP_200_OK)
-async def login(login_info: LoginRequest, db_session: AsyncSession = Depends(get_db_session)):
-    result = await authenticate(db_session=db_session, login_info=login_info)
-    if result:
-        return {"email": result}
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Email or password is not correct")
-
-
-@router.post("/token", response_model=Token)
+@router.post("/token", response_model=Token, status_code=status.HTTP_200_OK)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db_session)],
@@ -76,3 +67,9 @@ async def signup(user: CreateUserRequest, db_session: AsyncSession = Depends(get
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="An unexpected error occurred")
+
+
+@router.get("/")
+async def get_all(current_user: CurrentUser,db_session: Annotated[AsyncSession, Depends(get_db_session)], limit: int = Query(default=10), page: int = Query(default=1)):
+    result, total = await get_all_users(limit, page, db_session)
+    return {"users": result, "total": total}

@@ -132,7 +132,6 @@ async def get_all_users(limit: int, page: int, db_session: AsyncSession):
     return users, total_no_users
 
 
-
 async def update_user(
     user_info: UserUpdate,
     current_user: CurrentUser,
@@ -155,5 +154,23 @@ async def update_user(
     await db_session.refresh(user)
 
     return user
+
+
+async def delete_user_by_id(id: int,
+                      current_user: CurrentUser,
+                      db_session: AsyncSession,
+                      ):
+    if id != current_user.id:
+        return None
     
+    statement = select(User).where(User.id == current_user.id)
+
+    result = await db_session.execute(statement)
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        return None
     
+    user.deleted_at = datetime.now(timezone.utc)
+    await db_session.commit()
+

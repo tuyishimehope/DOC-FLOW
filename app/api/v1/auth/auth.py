@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 from app.service.auth.auth import authenticate, create_user, get_all_users
@@ -16,6 +16,15 @@ from config import settings
 from app.service.auth.auth import CurrentUser
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
+
+
+@router.post("/login")
+async def login(login_info: LoginRequest, db_session: Annotated[AsyncSession, Depends(get_db_session)]):
+    result = await authenticate(login_info, db_session)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Email or Password is not correct")
+    return result
 
 
 @router.post("/token", response_model=Token, status_code=status.HTTP_200_OK)
@@ -70,6 +79,6 @@ async def signup(user: CreateUserRequest, db_session: AsyncSession = Depends(get
 
 
 @router.get("/")
-async def get_all(current_user: CurrentUser,db_session: Annotated[AsyncSession, Depends(get_db_session)], limit: int = Query(default=10), page: int = Query(default=1)):
+async def get_all(current_user: CurrentUser, db_session: Annotated[AsyncSession, Depends(get_db_session)], limit: int = Query(default=10), page: int = Query(default=1)):
     result, total = await get_all_users(limit, page, db_session)
     return {"users": result, "total": total}

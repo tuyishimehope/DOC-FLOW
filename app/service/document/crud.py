@@ -1,7 +1,8 @@
 from sqlalchemy import Select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.schema import Document, Extracted_Result, File, Processing_Request, Processing_Job
+from app.models.schema import Document, Extracted_Result, File, Processing_Request, Processing_Job, User
+from app.service.auth.auth import CurrentUser
 from app.service.document.schema import Processing_status
 
 
@@ -35,24 +36,31 @@ async def save_processing_request(document_object, processing_type, instructions
     return processing_request_object
 
 
-async def get_processing_request_status(processing_request_id: int, db_session: AsyncSession):
+async def get_processing_request_status(processing_request_id: int, current_user: CurrentUser, db_session: AsyncSession):
+
     request = (
         Select(Processing_Request)
+        .join(Document)
         .where(
-            Processing_Request.id == processing_request_id
+            Processing_Request.id == processing_request_id,
+            Document.user_id == current_user.id
         )
     )
+
     result = await db_session.execute(request)
     response = result.scalar_one_or_none()
     return response
 
 
-async def get_processing_request_result(processing_request_id: int, db_session: AsyncSession):
+async def get_processing_request_result(processing_request_id: int, current_user: CurrentUser, db_session: AsyncSession):
     request = (
         Select(Extracted_Result)
+        .join(Processing_Request)
+        .join(Document)
         .where(
             Extracted_Result.processing_request_id
-            == processing_request_id
+            == processing_request_id,
+            Document.user_id == current_user.id
         )
     )
     result = await db_session.execute(request)
@@ -113,8 +121,8 @@ async def get_jobs(id: int, db_session: AsyncSession) -> list[Processing_Job]:
     return list(result)
 
 
-async def get_processing_request_by_id(id: int, db_session: AsyncSession):
-    stmt = Select(Processing_Request).where(Processing_Request.id == id)
+async def get_processing_request_by_id(id: int, current_user: CurrentUser, db_session: AsyncSession):
+    stmt = Select(Processing_Request).join(Document).where(Processing_Request.id == id, Document.user_id == current_user.id)
     record = await db_session.execute(stmt)
     result = record.scalar_one_or_none()
     return result

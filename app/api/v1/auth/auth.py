@@ -18,13 +18,13 @@ from app.service.auth.auth import CurrentUser
 router = APIRouter(prefix="/api/users", tags=["users"])
 
 
-@router.post("/login")
+@router.post("/login", status_code=status.HTTP_200_OK)
 async def login(login_info: LoginRequest, db_session: AsyncSession = Depends(get_db_session)):
-    result = await authenticate(db_session=db_session, email=login_info.email, password=login_info.password)
+    result = await authenticate(db_session=db_session, login_info=login_info)
     if result:
-        return result
+        return {"email": result}
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Email or password not correct")
+                        detail="Email or password is not correct")
 
 
 @router.post("/token", response_model=Token)

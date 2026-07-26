@@ -25,10 +25,12 @@ async def post_document_endpoint(file: UploadFile, current_user: CurrentUser, pr
 @router.get("/status/{processing_request_id}")
 async def get_status_endpoint(
     processing_request_id: int,
+    current_user: CurrentUser,
     db_session: AsyncSession = Depends(get_db_session)
 ):
     result = await get_processing_status(
         processing_request_id,
+        current_user,
         db_session
     )
     if result is None:
@@ -40,10 +42,12 @@ async def get_status_endpoint(
 @router.get("/result/{processing_request_id}")
 async def get_result_endpoint(
     processing_request_id: int,
+    current_user: CurrentUser,
     db_session: AsyncSession = Depends(get_db_session)
 ):
     result = await get_processing_result(
         processing_request_id,
+        current_user,
         db_session
     )
     if result is None:
@@ -100,8 +104,8 @@ async def get_status_jobs_endpoint(id: int, db_session: AsyncSession = Depends(g
 
 
 @router.get("/processing_request/{id}")
-async def get_processing_request_endpoint(id: int, db_session: AsyncSession = Depends(get_db_session)):
-    response = await get_processing_request(id=id, db_session=db_session)
+async def get_processing_request_endpoint(id: int, current_user: CurrentUser, db_session: AsyncSession = Depends(get_db_session)):
+    response = await get_processing_request(id=id, current_user=current_user, db_session=db_session)
     if response is not None:
         return response
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,

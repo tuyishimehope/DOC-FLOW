@@ -3,6 +3,7 @@ import traceback
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+from app.service.auth.auth import CurrentUser
 from app.tasks.document_task import start_processing
 from app.utils.document import get_file_extension
 from .schema import Processing_Type
@@ -48,9 +49,10 @@ async def process_document(id: int, file: UploadFile, processing_type: Processin
 
 async def get_processing_status(
     processing_request_id: int,
+    current_user: CurrentUser,
     db_session: AsyncSession
 ):
-    result = await get_processing_request_status(processing_request_id=processing_request_id, db_session=db_session)
+    result = await get_processing_request_status(processing_request_id=processing_request_id, current_user=current_user, db_session=db_session)
 
     if not result:
         return None
@@ -63,9 +65,10 @@ async def get_processing_status(
 
 async def get_processing_result(
     processing_request_id: int,
+    current_user: CurrentUser,
     db_session: AsyncSession
 ):
-    result = await get_processing_request_result(processing_request_id=processing_request_id, db_session=db_session)
+    result = await get_processing_request_result(processing_request_id=processing_request_id, current_user=current_user, db_session=db_session)
 
     if not result:
         return None
@@ -115,6 +118,6 @@ async def get_status_jobs(id: int, db_session: AsyncSession):
     return response
 
 
-async def get_processing_request(id: int, db_session: AsyncSession):
-    response = await get_processing_request_by_id(id, db_session)
+async def get_processing_request(id: int, current_user: CurrentUser, db_session: AsyncSession):
+    response = await get_processing_request_by_id(id, current_user, db_session)
     return response

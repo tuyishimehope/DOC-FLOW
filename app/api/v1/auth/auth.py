@@ -15,7 +15,7 @@ from app.models import schema
 from config import settings
 from app.service.auth.auth import CurrentUser
 
-router = APIRouter(prefix="/api/users", tags=["users"])
+router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
 
 @router.post("/token", response_model=Token, status_code=status.HTTP_200_OK)

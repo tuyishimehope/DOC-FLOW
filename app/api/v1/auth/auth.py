@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
-from app.service.auth.auth import authenticate, create_user, get_all_users
+from app.service.auth.auth import authenticate, create_user, get_all_users, update_user
 from app.db.dependencies import get_db_session
-from app.service.auth.schema import LoginRequest, CreateUserRequest, UserResponse
+from app.service.auth.schema import LoginRequest, CreateUserRequest, UserBase, UserResponse, UserUpdate
 from app.service.auth.auth import create_access_token, verify_password
 from app.service.auth.schema import Token
 from app.models import schema
@@ -82,3 +82,11 @@ async def signup(user: CreateUserRequest, db_session: AsyncSession = Depends(get
 async def get_all(current_user: CurrentUser, db_session: Annotated[AsyncSession, Depends(get_db_session)], limit: int = Query(default=10), page: int = Query(default=1)):
     result, total = await get_all_users(limit, page, db_session)
     return {"users": result, "total": total}
+
+
+@router.patch("/{id}")
+async def update_user_info(user_info: UserUpdate, current_user: CurrentUser, db_session: Annotated[AsyncSession, Depends(get_db_session)]):
+    result = await update_user(user_info, current_user, db_session)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to perform this action")
+    return result

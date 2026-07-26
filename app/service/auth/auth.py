@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from app.db.dependencies import get_db_session
-from app.service.auth.schema import LoginRequest
+from app.service.auth.schema import LoginRequest, UserBase, UserUpdate
 from config import settings
 from app.models.schema import User
 from app.service.auth.crud import get_count_users, get_user_by_email, get_users
@@ -19,7 +19,7 @@ from app.service.auth.crud import get_count_users, get_user_by_email, get_users
 
 password_hash = PasswordHash.recommended()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/token")
 
 
 def hash_password(password: str) -> str:
@@ -130,3 +130,30 @@ async def get_all_users(limit: int, page: int, db_session: AsyncSession):
     total_no_users = await get_count_users(db_session)
     users = await get_users(limit, page, db_session)
     return users, total_no_users
+
+
+
+async def update_user(
+    user_info: UserUpdate,
+    current_user: CurrentUser,
+    db_session: AsyncSession,
+):
+    statement = select(User).where(User.id == current_user.id)
+
+    result = await db_session.execute(statement)
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        return None
+
+    update_data = user_info.model_dump(exclude_unset=True)
+
+    for field, value in update_data.items():
+        setattr(user, field, value)
+
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    return user
+    
+    

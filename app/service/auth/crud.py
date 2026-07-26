@@ -31,3 +31,5 @@ async def get_count_users(db_session: AsyncSession):
     result = await db_session.execute(statement)
     data = result.scalars().all()
     return data
+
+

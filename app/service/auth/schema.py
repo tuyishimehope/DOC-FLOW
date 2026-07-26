@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr, ConfigDict
 from fastapi import Body
 
@@ -12,6 +14,10 @@ class UserBase(BaseModel):
     last_name: str = Body()
     email: EmailStr = Body()
 
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = Body()
+    last_name: Optional[str] = Body()
+    email: Optional[EmailStr] = Body()
 
 class CreateUserRequest(UserBase):
     password: str = Body()

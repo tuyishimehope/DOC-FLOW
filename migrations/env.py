@@ -1,20 +1,19 @@
 import asyncio
-import os
-from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from alembic import context
+
 from app.db.base import Base
-from dotenv import load_dotenv
+from app.core.config import settings
+from logging.config import fileConfig
 
-load_dotenv()
 
-DATABASE_NAME = os.getenv("DATABASE_NAME")
-DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
-DATABASE_HOST = os.getenv("DATABASE_HOST")
-DATABASE_PORT = os.getenv("DATABASE_PORT")
+DATABASE_NAME=settings.DATABASE_NAME
+DATABASE_PASSWORD=settings.DATABASE_PASSWORD
+DATABASE_HOST=settings.DATABASE_HOST
+DATABASE_PORT=settings.DATABASE_PORT
 
 config = context.config
 

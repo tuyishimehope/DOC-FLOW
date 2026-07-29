@@ -1,17 +1,14 @@
-import os
-from dotenv import load_dotenv
+from app.core.config import settings
 
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy import create_engine
 
-load_dotenv()
-
-DATABASE_NAME=os.getenv("DATABASE_NAME")
-DATABASE_PASSWORD=os.getenv("DATABASE_PASSWORD")
-DATABASE_HOST=os.getenv("DATABASE_HOST")
-DATABASE_PORT=os.getenv("DATABASE_PORT")
+DATABASE_NAME=settings.DATABASE_NAME
+DATABASE_PASSWORD=settings.DATABASE_PASSWORD
+DATABASE_HOST=settings.DATABASE_HOST
+DATABASE_PORT=settings.DATABASE_PORT
 
 
 engine = create_async_engine(

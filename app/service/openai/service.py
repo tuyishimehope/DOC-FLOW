@@ -1,13 +1,10 @@
-import os
-from dotenv import load_dotenv
-
 from openai import OpenAI
 
-load_dotenv()
+from app.core.config import settings
 
 class OpenaiService:
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
     async def generate_summary(self, content: str, instructions: str):
         response = self.client.responses.create(

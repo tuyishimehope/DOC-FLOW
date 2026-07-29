@@ -77,16 +77,15 @@ async def get_document_by_id(id: int, db_session: AsyncSession, user_id: int) ->
     return response
 
 
-async def get_all_documents(page: int, limit: int, db_session: AsyncSession, user_id: int):
-    offset = (page - 1) * limit
+async def get_all_documents(skip: int, limit: int, db_session: AsyncSession, user_id: int) -> list[Document] :
     statement = Select(Document).where(Document.user_id ==
-                                       user_id).offset(offset).limit(limit)
+                                       user_id).offset(skip).limit(limit)
     result = await db_session.execute(statement)
     response = result.scalars().all()
-    return response
+    return list(response)
 
 
-async def get_total_no_of_documents(db_session: AsyncSession, user_id: int):
+async def get_total_no_of_documents(db_session: AsyncSession, user_id: int) -> int:
     statement = Select(func.count(Document.id)).where(
         Document.user_id == user_id)
     result = await db_session.execute(statement)

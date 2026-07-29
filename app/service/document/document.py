@@ -81,10 +81,9 @@ async def get_document(id: int, db_session: AsyncSession, user_id: int):
     return result
 
 
-async def get_documents(page: int, limit: int, db_session: AsyncSession, user_id: int):
-    result = await get_all_documents(page=page, limit=limit, db_session=db_session, user_id=user_id)
-    total_documents = await get_total_no_of_documents(db_session=db_session, user_id=user_id)
-    return result, total_documents
+async def get_documents(skip: int, limit: int, db_session: AsyncSession, user_id: int):
+    result = await get_all_documents(skip=skip, limit=limit, db_session=db_session, user_id=user_id)
+    return result
 
 
 async def delete_document(id: int, current_user: CurrentUser, db_session: AsyncSession):

@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, UploadFile, HTTPException, status, Body,
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db_session
+from app.service.document.crud import get_total_no_of_documents
 from app.service.document.document import delete_document, get_document, get_documents, get_status_jobs, process_document
-from app.service.document.schema import Processing_Type
+from app.service.document.schema import PaginatedDocumentResponse, Processing_Type, DocumentResponse
 from app.utils.document import valid_type_document
 from app.service.auth.auth import CurrentUser
 
@@ -16,7 +17,7 @@ async def post_document_endpoint(file: UploadFile, current_user: CurrentUser, pr
     if not result:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File Format Not Accepted")
-        
+
     response = await process_document(id=current_user.id, file=file, processing_type=processing_type, instructions=instructions, db_session=db_session)
     return response
 
@@ -35,13 +36,16 @@ async def get_document_endpoint(id: int, current_user: CurrentUser, db_session: 
                         detail="Document Not Found")
 
 
-@router.get("")
-async def get_documents_endpoint(current_user: CurrentUser, page: int = Query(default=1, title="Current page", description="The current page to display items"), limit: int = Query(default=10, title="limit", description="limit of items per page", gt=1, le=50),  db_session: AsyncSession = Depends(get_db_session)):
+@router.get("", response_model=PaginatedDocumentResponse)
+async def get_documents_endpoint(current_user: CurrentUser, skip: int = Query(default=0, ge=0, le=50, title="skip page", description="The items to skip "), limit: int = Query(default=10, title="limit", description="limit of items per page", gt=1, le=50),  db_session: AsyncSession = Depends(get_db_session)):
     if current_user is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Not authorized to view document")
-    result, total_documents = await get_documents(page=page, limit=limit, db_session=db_session, user_id=current_user.id)
-    return {"data": result, "total_documents": total_documents}
+    result = await get_documents(skip=skip, limit=limit, db_session=db_session, user_id=current_user.id)
+    total = await get_total_no_of_documents(db_session=db_session, user_id=current_user.id)
+
+    return PaginatedDocumentResponse(documents=[DocumentResponse.model_validate(document) for document in result],
+                                     total=total, skip=skip, limit=limit, has_more=skip + len(result) < total)
 
 
 @router.delete("/{id}")

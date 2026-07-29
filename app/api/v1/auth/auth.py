@@ -13,7 +13,7 @@ from app.service.auth.auth import create_access_token, verify_password
 from app.service.auth.schema import Token
 from app.models import schema
 from app.service.auth.auth import CurrentUser
-from config import settings
+from app.core.config import settings
 
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])

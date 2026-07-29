@@ -40,7 +40,7 @@ async def process_document(id: int, file: UploadFile, processing_type: Processin
         processing_request_object.status = Processing_status.QUEUED
         await db_session.commit()
 
-        return {"processing_request_id": processing_request_object.id, "status": processing_request_object.status}
+        return {"document_id": document_object.id, "processing_request_id": processing_request_object.id, "status": processing_request_object.status}
     except Exception as e:
         traceback.print_exc()
         print("An expected error occurred", e)

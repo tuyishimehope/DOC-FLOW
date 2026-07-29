@@ -14,3 +14,4 @@ argon2-cffi
 pyjwt 
 pydantic-settings
 pwdlib[argon2]
+pytesseract

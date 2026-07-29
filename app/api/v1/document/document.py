@@ -16,7 +16,7 @@ async def post_document_endpoint(file: UploadFile, current_user: CurrentUser, pr
     if not result:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File Format Not Accepted")
-
+        
     response = await process_document(id=current_user.id, file=file, processing_type=processing_type, instructions=instructions, db_session=db_session)
     return response
 

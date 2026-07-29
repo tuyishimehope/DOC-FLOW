@@ -6,10 +6,14 @@ from sqlalchemy import Select
 from app.service.document.schema import Processing_Job_Status, Processing_Type, Processing_status
 from app.service.file.file import get_file
 from app.service.openai.service import OpenaiService
-from app.utils.document import extract_text_from_doc, extract_text_from_pdf
+from app.utils.document import extract_text_from_image, extract_text_from_doc, extract_text_from_pdf
 from app.tasks.celery_app import celery_app
 from app.db.session import SessionLocal, SyncSession
 from app.models.schema import Document, Extracted_Result, File, Processing_Job, Processing_Request
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 @celery_app.task(
@@ -20,6 +24,7 @@ from app.models.schema import Document, Extracted_Result, File, Processing_Job, 
 )
 def start_processing(self, processing_request_id: int):
     try:
+        logger.info("start processing")
         asyncio.run(process_document(
             self=self,
             processing_request_id=processing_request_id
@@ -34,6 +39,7 @@ async def process_document(self, processing_request_id: int):
     processing_request_result = None
     job = None
     try:
+        # get processing request
         processing_request_statement = db_session.execute(Select(Processing_Request).where(Processing_Request.id == processing_request_id
                                                                                            ))
         processing_request_result = processing_request_statement.scalar_one_or_none()
@@ -41,6 +47,7 @@ async def process_document(self, processing_request_id: int):
         if processing_request_result is None:
             return
 
+        # get document
         document_statement = db_session.execute(Select(Document).where(
             Document.id == processing_request_result.document_id
         ))
@@ -49,27 +56,39 @@ async def process_document(self, processing_request_id: int):
         if document_statement_result is None:
             return
 
+        # get file
         file_statement = db_session.execute(Select(File).where(
             File.id == document_statement_result.file_id))
-        file_statement_result = file_statement.scalar()
+        file_result = file_statement.scalar()
 
-        if file_statement_result is None:
+        if file_result is None:
             return
 
-        file_object = get_file(file_id=file_statement_result.id)
+        file_object = get_file(file_id=file_result.id)
 
         processing_type = processing_request_result.processing_type
         instructions = processing_request_result.instructions
 
+        logger.info("Starting processing request %s", processing_request_id)
+        
         extracted_content = ""
-        if file_statement_result.content_type == "application/pdf":
+        if file_result.content_type == "application/pdf":
             extracted_content = extract_text_from_pdf(
                 file_stream=file_object)
-        elif file_statement_result.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        elif file_result.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
             extracted_content = extract_text_from_doc(
                 file_stream=file_object)
+        elif file_result.content_type.startswith("image"):
+            file_bytes = file_object.read()
+            extracted_content = extract_text_from_image(
+                file_stream=file_bytes)
+
+        logger.info(file_result.content_type)
+        logger.info(f"extracted_content: {extracted_content}")
 
         if not extracted_content:
+            processing_request_result.status = Processing_status.FAILED
+            db_session.commit()
             return
 
         processing_request_result.status = (

@@ -8,12 +8,13 @@ from sqlalchemy import func, select
 
 from app.service.auth.auth import create_user, delete_user_by_id, get_all_users, update_user
 from app.db.dependencies import get_db_session
-from app.service.auth.schema import CreateUserRequest, UserResponse, UserUpdate
+from app.service.auth.schema import CreateUserRequest, PaginatedUserResponse, UserResponse, UserUpdate
 from app.service.auth.auth import create_access_token, verify_password
 from app.service.auth.schema import Token
 from app.models import schema
 from app.service.auth.auth import CurrentUser
 from app.core.config import settings
+from app.service.auth.crud import get_count_users
 
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
@@ -79,11 +80,20 @@ async def signup(user: CreateUserRequest, db_session: AsyncSession = Depends(get
                             detail="An unexpected error occurred")
 
 
-@router.get("/")
+@router.get("/", response_model=PaginatedUserResponse)
 async def get_all(current_user: CurrentUser, db_session: Annotated[AsyncSession, Depends(get_db_session)], limit: int = Query(default=10, ge=1, le=100),
-                  page: int = Query(default=1, ge=1)):
-    result, total = await get_all_users(limit, page, db_session)
-    return {"users": result, "total": total}
+                  skip: int = Query(default=0, ge=0, le=100)):
+    result = await get_all_users(limit, skip, db_session)
+    total_no_users = await get_count_users(db_session)
+
+    has_more = skip + len(result) < total_no_users
+    return PaginatedUserResponse(
+        users=[UserResponse.model_validate(user) for user in result],
+        total=total_no_users, 
+        skip=skip, 
+        limit=limit, 
+        has_more=has_more
+    )
 
 
 @router.patch("/{id}")

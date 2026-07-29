@@ -125,11 +125,9 @@ async def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-async def get_all_users(limit: int, page: int, db_session: AsyncSession):
-
-    total_no_users = await get_count_users(db_session)
-    users = await get_users(limit, page, db_session)
-    return users, total_no_users
+async def get_all_users(limit: int, skip: int, db_session: AsyncSession) -> list[User]:
+    users = await get_users(limit, skip, db_session)
+    return users
 
 
 async def update_user(

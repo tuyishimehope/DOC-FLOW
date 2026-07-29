@@ -1,11 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db_session
 from app.service.auth.auth import CurrentUser
-from app.service.file.file import get_file_by_id, delete_file_by_id
+from app.service.file.crud import get_count
+from app.service.file.file import get_all_files, get_file_by_id, delete_file_by_id
+from app.service.file.schema import FileResponse, PaginatedFileResponse
 
 router = APIRouter(prefix="/api/v1/files", tags=["files"])
 
@@ -44,6 +46,17 @@ async def get_file_endpoint(id: int, current_user: CurrentUser, db_session: Asyn
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="file not found")
+
+
+@router.get("", response_model=PaginatedFileResponse)
+async def get_files(current_user: CurrentUser, db_session: Annotated[AsyncSession, Depends(get_db_session)], limit: int = Query(default=10, ge=1, le=50), skip: int = Query(default=0, ge=0, le=50)):
+    result = await get_all_files(limit=limit, skip=skip, user_id=current_user.id, db_session=db_session)
+    total = await get_count(user_id=current_user.id,db_session=db_session)
+    return PaginatedFileResponse(files=[FileResponse.model_validate(file) for file in result],
+                                 total=total,
+                                 skip=skip,
+                                 limit=limit,
+                                 has_more = skip + len(result) < total)
 
 
 @router.delete("/{id}")

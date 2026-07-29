@@ -7,7 +7,7 @@ from app.core.minio import minio_client
 from app.service.auth.auth import CurrentUser
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.service.file.crud import get_file_id
+from app.service.file.crud import get_file_id, get_all_files_by_user
 
 BUCKET_NAME = os.getenv("MINIO_BUCKET", "")
 
@@ -89,3 +89,6 @@ async def delete_file_by_id(id: int, current_user: CurrentUser, db_session: Asyn
     
     return id
     
+async def get_all_files(limit: int, skip: int, user_id: int, db_session: AsyncSession):
+    result = await get_all_files_by_user(limit=limit, skip=skip, user_id=user_id, db_session=db_session)
+    return result

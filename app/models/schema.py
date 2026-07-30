@@ -1,4 +1,5 @@
-from datetime import datetime
+from __future__ import annotations
+from datetime import datetime, timezone
 from typing import List, Optional
 from sqlalchemy import String, Text, JSON, Float, Integer, ForeignKey, Index, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -165,3 +166,25 @@ class User(Base):
     deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     
     documents: Mapped[List["Document"]] = relationship("Document", back_populates="user",cascade="all, delete-orphan")
+    
+    reset_tokens: Mapped[list[PasswordResetToken]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    user: Mapped[User] = relationship(back_populates="reset_tokens")

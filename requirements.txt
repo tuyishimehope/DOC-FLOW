@@ -16,3 +16,5 @@ pydantic-settings
 pwdlib[argon2]
 pytesseract
 aiosmtplib
+pytest
+greenlet

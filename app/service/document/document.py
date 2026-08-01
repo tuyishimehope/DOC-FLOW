@@ -42,9 +42,9 @@ async def process_document(id: int, file: UploadFile, processing_type: Processin
 
         return {"document_id": document_object.id, "processing_request_id": processing_request_object.id, "status": processing_request_object.status}
     except Exception as e:
-        traceback.print_exc()
         print("An expected error occurred", e)
         await db_session.rollback()
+        raise
 
 
 async def get_processing_status(

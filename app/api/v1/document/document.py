@@ -22,7 +22,7 @@ async def post_document_endpoint(file: UploadFile, current_user: CurrentUser, pr
     return response
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_model=DocumentResponse)
 async def get_document_endpoint(id: int, current_user: CurrentUser, db_session: AsyncSession = Depends(get_db_session)):
     if current_user is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
@@ -30,7 +30,7 @@ async def get_document_endpoint(id: int, current_user: CurrentUser, db_session: 
 
     document = await get_document(id=id, db_session=db_session, user_id=current_user.id)
     if document is not None:
-        return document
+        return DocumentResponse(id=document.id, name=document.name, status=document.status, file_id=document.file_id, user_id=document.user_id, created_at=document.created_at, updated_at=document.updated_at)
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Document Not Found")
@@ -48,15 +48,16 @@ async def get_documents_endpoint(current_user: CurrentUser, skip: int = Query(de
                                      total=total, skip=skip, limit=limit, has_more=skip + len(result) < total)
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", response_model=DocumentResponse)
 async def delete_document_endpoint(current_user: CurrentUser, id: int, db_session: AsyncSession = Depends(get_db_session)):
     if current_user is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Not authorized to view document")
 
     document = await delete_document(id=id, db_session=db_session, current_user=current_user)
+    print("document", document)
     if document is not None:
-        return document
+        return DocumentResponse(id=document.id, name=document.name, status=document.status, file_id=document.file_id, user_id=document.user_id, created_at=document.created_at, updated_at=document.updated_at)
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Document Not Found")

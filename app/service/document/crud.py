@@ -100,6 +100,7 @@ async def delete_document_by_id(id: int, current_user: CurrentUser, db_session: 
             await db_session.delete(document)
             await delete_file_by_id(id=document.file_id, current_user=current_user, db_session=db_session)
             await db_session.commit()
+            return document
     except:
         await db_session.rollback()
 

@@ -42,7 +42,7 @@ async def test_post_document(client: AsyncClient, auth_headers: dict[str, str], 
 
 @pytest.mark.anyio
 async def test_get_all_documents(client: AsyncClient, auth_headers: dict[str, str]):
-    response = await client.get("/api/v1/documents", headers=auth_headers)
+    response = await client.get(api, headers=auth_headers)
 
     assert response.status_code == 200
     data = response.json()
@@ -53,7 +53,7 @@ async def test_get_all_documents(client: AsyncClient, auth_headers: dict[str, st
 
 @pytest.mark.anyio
 async def test_document_not_found(client: AsyncClient, auth_headers: dict[str, str]):
-    response = await client.get("api/v1/documents/999", headers=auth_headers)
+    response = await client.get(f"{api}/999", headers=auth_headers)
 
     assert response.status_code == 404
 

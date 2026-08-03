@@ -8,7 +8,7 @@ import jwt
 from pwdlib import PasswordHash
 from fastapi.security import OAuth2PasswordBearer
 from argon2 import PasswordHasher
-from sqlalchemy import select
+from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -31,12 +31,14 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return password_hash.verify(password=plain_password, hash=hashed_password)
 
+
 def generate_reset_token() -> str:
     return secrets.token_urlsafe(32)
 
 
 def hash_reset_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
+
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
@@ -83,6 +85,10 @@ async def authenticate(login_info: LoginRequest, db_session: AsyncSession):
 
 async def create_user(first_name: str, last_name: str, email: str, password: str, db_session: AsyncSession,):
     try:
+        user = await get_user_by_email(email, db_session)
+        if user is not None:
+            return False
+
         password_hash = hash_password(password)
         user = User(first_name=first_name, last_name=last_name,
                     email=email.lower(), password_hash=password_hash)
@@ -118,7 +124,7 @@ async def get_current_user(
         )
 
     result = await db.execute(
-        select(User).where(User.id == user_id_int),
+        Select(User).where(User.id == user_id_int),
     )
     user = result.scalars().first()
     if not user:
@@ -147,7 +153,7 @@ async def update_user(
     if id != current_user.id:
         return None
 
-    statement = select(User).where(User.id == current_user.id)
+    statement = Select(User).where(User.id == current_user.id)
 
     result = await db_session.execute(statement)
     user = result.scalar_one_or_none()
@@ -173,7 +179,7 @@ async def delete_user_by_id(id: int,
     if id != current_user.id:
         return None
 
-    statement = select(User).where(User.id == current_user.id)
+    statement = Select(User).where(User.id == current_user.id)
 
     result = await db_session.execute(statement)
     user = result.scalar_one_or_none()

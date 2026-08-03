@@ -16,9 +16,9 @@ class UserBase(BaseModel):
     email: EmailStr = Body()
 
 class UserUpdate(BaseModel):
-    first_name: Optional[str] = Body()
-    last_name: Optional[str] = Body()
-    email: Optional[EmailStr] = Body()
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
 
 class CreateUserRequest(UserBase):
     password: str = Body()

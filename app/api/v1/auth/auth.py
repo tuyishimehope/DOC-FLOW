@@ -71,15 +71,15 @@ async def get_current_user(
     return current_user
 
 
-@router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def signup(user: CreateUserRequest, db_session: AsyncSession = Depends(get_db_session)):
-    try:
-        result = await create_user(db_session=db_session, first_name=user.first_name, last_name=user.last_name, email=user.email, password=user.password)
-        if result:
-            return result
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="An unexpected error occurred")
+    result = await create_user(db_session=db_session, first_name=user.first_name, last_name=user.last_name, email=user.email, password=user.password)
+
+    if result:
+        return result
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Email already exists")
 
 
 @router.get("/", response_model=PaginatedUserResponse)
@@ -91,9 +91,9 @@ async def get_all(current_user: CurrentUser, db_session: Annotated[AsyncSession,
     has_more = skip + len(result) < total_no_users
     return PaginatedUserResponse(
         users=[UserResponse.model_validate(user) for user in result],
-        total=total_no_users, 
-        skip=skip, 
-        limit=limit, 
+        total=total_no_users,
+        skip=skip,
+        limit=limit,
         has_more=has_more
     )
 
@@ -114,6 +114,7 @@ async def delete_user(id: int, current_user: CurrentUser, db_session: Annotated[
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="You are not allowed to perform this action")
     return result
+
 
 @router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
 async def forgot_password(
@@ -159,6 +160,7 @@ async def forgot_password(
     return {
         "message": "If an account exists with this email, you will receive password reset instructions.",
     }
+
 
 @router.post("/reset-password", status_code=status.HTTP_200_OK)
 async def reset_password(
@@ -212,6 +214,7 @@ async def reset_password(
         "message": "Password reset successfully. You can now log in with your new password.",
     }
 
+
 @router.patch("/me/password", status_code=status.HTTP_200_OK)
 async def change_password(
     password_data: ChangePasswordRequest,
@@ -234,5 +237,3 @@ async def change_password(
 
     await db.commit()
     return {"message": "Password changed successfully"}
-
-

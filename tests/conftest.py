@@ -1,6 +1,14 @@
+from app.main import app
+from app.db.dependencies import get_db_session
+# from app.db.base import Base as s
+from app.db.base_class import Base
+from sqlalchemy.pool import NullPool
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from httpx import ASGITransport, AsyncClient
+import pytest
 import os
 from collections.abc import AsyncGenerator
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 os.environ["DATABASE_URL"] = (
     "postgresql+asyncpg://docflow_user:your_password@localhost/test_docflow"
@@ -24,24 +32,13 @@ os.environ["MINIO_BUCKET"] = "test-bucket"
 os.environ["MINIO_SECURE"] = "false"
 
 
-import boto3
-import pytest
-from httpx import ASGITransport, AsyncClient
-from moto import mock_aws
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import NullPool
-
-from app.db.base_class import Base
-from app.db.base import Base as s
-from app.db.dependencies import get_db_session
-from app.main import app
-
 pytest_plugins = ["anyio"]
 
 
 @pytest.fixture(scope="session")
 def anyio_backend():
     return "asyncio"
+
 
 @pytest.fixture(scope="session")
 def test_engine():
@@ -51,9 +48,11 @@ def test_engine():
     )
     return engine
 
+
 @pytest.fixture(scope="session")
 async def setup_database(test_engine):
     async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     yield
@@ -62,7 +61,8 @@ async def setup_database(test_engine):
         await conn.run_sync(Base.metadata.drop_all)
 
     await test_engine.dispose()
-    
+
+
 @pytest.fixture
 async def db_session(
     test_engine,
@@ -85,12 +85,14 @@ async def db_session(
             await session.close()
             await trans.rollback()
             await conn.close()
-            
+
+
 @pytest.fixture
 def mocked_minio():
     with patch("app.service.file.file.minio_client") as mock_client:
         yield mock_client
-        
+
+
 @pytest.fixture
 async def client(
     db_session: AsyncSession,
@@ -109,8 +111,8 @@ async def client(
         yield ac
 
     app.dependency_overrides.clear()
-    
-    
+
+
 async def create_test_user(
     client: AsyncClient,
     first_name: str = "testuser",
@@ -149,6 +151,7 @@ async def login_user(
 
 def auth_header(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
 
 @pytest.fixture
 async def auth_headers(client: AsyncClient) -> dict[str, str]:

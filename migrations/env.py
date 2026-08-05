@@ -14,6 +14,7 @@ DATABASE_NAME=settings.DATABASE_NAME
 DATABASE_PASSWORD=settings.DATABASE_PASSWORD
 DATABASE_HOST=settings.DATABASE_HOST
 DATABASE_PORT=settings.DATABASE_PORT
+DATABASE_USER=settings.DATABASE_USER
 
 config = context.config
 
@@ -24,7 +25,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 url = (
-    f"postgresql+asyncpg://postgres:{DATABASE_PASSWORD}"
+    f"postgresql+asyncpg://{DATABASE_USER}:{DATABASE_PASSWORD}"
     f"@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
 )
 config.set_main_option("sqlalchemy.url", url)

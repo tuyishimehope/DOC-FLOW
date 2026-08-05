@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     DATABASE_PASSWORD: str
     DATABASE_HOST: str
     DATABASE_PORT: str
+    DATABASE_USER: str
 
     MINIO_ENDPOINT: str
     MINIO_ACCESS_KEY: str
@@ -28,7 +29,7 @@ class Settings(BaseSettings):
     MINIO_BUCKET: str
     MINIO_SECURE: str
 
-    DATABASE_URL: str
+    DATABASE_URL_TEST: str
 
     REDIS_URL: str
     

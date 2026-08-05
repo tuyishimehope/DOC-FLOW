@@ -10,7 +10,7 @@ import os
 from collections.abc import AsyncGenerator
 from unittest.mock import patch
 
-os.environ["DATABASE_URL"] = (
+os.environ["DATABASE_URL_TEST"] = (
     "postgresql+asyncpg://docflow_user:your_password@localhost/test_docflow"
 )
 os.environ["S3_BUCKET_NAME"] = "test-bucket"
@@ -43,7 +43,7 @@ def anyio_backend():
 @pytest.fixture(scope="session")
 def test_engine():
     engine = create_async_engine(
-        os.environ["DATABASE_URL"],
+        os.environ["DATABASE_URL_TEST"],
         poolclass=NullPool,
     )
     return engine

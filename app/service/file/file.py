@@ -8,8 +8,9 @@ from app.service.auth.auth import CurrentUser
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.service.file.crud import get_file_id, get_all_files_by_user
+from app.core.config import settings
 
-BUCKET_NAME = os.getenv("MINIO_BUCKET", "")
+BUCKET_NAME = settings.MINIO_BUCKET
 
 
 async def post_file(file: UploadFile, file_id: str):

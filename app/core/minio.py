@@ -1,9 +1,12 @@
 from minio import Minio
 import os
 
+from app.core.config import settings
+
+
 minio_client = Minio(
-    endpoint=os.getenv("MINIO_ENDPOINT", ""),
-    access_key=os.getenv("MINIO_ACCESS_KEY"),
-    secret_key=os.getenv("MINIO_SECRET_KEY"),
-    secure=os.getenv("MINIO_SECURE", "false").lower() == "true",
+    endpoint=settings.MINIO_ENDPOINT,
+    access_key=settings.MINIO_ACCESS_KEY,
+    secret_key=settings.MINIO_SECRET_KEY,
+    secure=settings.MINIO_SECURE,
 )

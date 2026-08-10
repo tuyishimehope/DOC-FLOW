@@ -31,7 +31,6 @@ class Settings(BaseSettings):
 
     DATABASE_URL_TEST: str
 
-    REDIS_URL: str
     
     reset_token_expire_minutes: int = 60
 
